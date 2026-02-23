@@ -1,0 +1,21 @@
+{
+  "name": "filament-specialist",
+  "description": "Expert FilamentPHP v5 assistant with complete official documentation. Generates resources, forms, tables, actions, widgets, infolists, and Pest tests following v5 patterns. Includes schemas, import/export, diagnosis and troubleshooting.",
+  "version": "1.0.0",
+  "license": "MIT",
+  "keywords": [
+    "filamentphp",
+    "filament",
+    "laravel",
+    "admin-panel",
+    "resources",
+    "forms",
+    "tables",
+    "schemas",
+    "crud",
+    "php",
+    "livewire",
+    "widgets",
+    "filament-v5"
+  ]
+}
