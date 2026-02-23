@@ -204,6 +204,72 @@ Action::make('load')
     ->dispatchTo('chart-widget', 'load-data', ['period' => 'month'])
 ```
 
+## JavaScript Notification API (v4.5+/v5)
+
+Send notifications from client-side JavaScript (Alpine.js, Blade scripts, `actionJs()`):
+
+```js
+// Basic notification
+new FilamentNotification()
+    .title('Saved!')
+    .success()
+    .send()
+
+// Full configuration
+new FilamentNotification()
+    .title('Link copied')
+    .body('The URL has been copied to your clipboard.')
+    .icon('heroicon-o-clipboard-document')
+    .iconColor('success')
+    .color('success')
+    .duration(3000)
+    .send()
+
+// With actions
+new FilamentNotification()
+    .title('File uploaded')
+    .success()
+    .actions([
+        new FilamentNotificationAction('View')
+            .url('/files/123')
+            .button(),
+        new FilamentNotificationAction('Dismiss')
+            .close(),
+    ])
+    .send()
+```
+
+### Usage in actionJs()
+```php
+Action::make('copy_url')
+    ->icon('heroicon-o-clipboard')
+    ->actionJs(<<<'JS'
+        navigator.clipboard.writeText($get('url')).then(() => {
+            new FilamentNotification()
+                .title('URL copied!')
+                .success()
+                .send()
+        })
+    JS)
+```
+
+## Notification Positioning
+
+```php
+// In panel provider - set default position
+use Filament\Notifications\Livewire\Notifications;
+use Filament\Notifications\NotificationsPosition;
+
+Notifications::position(NotificationsPosition::TopCenter);
+// Options: TopLeft, TopCenter, TopRight, BottomLeft, BottomCenter, BottomRight
+
+// Database notifications as sidebar
+use Filament\Notifications\Livewire\DatabaseNotifications;
+use Filament\Notifications\DatabaseNotificationsPosition;
+
+DatabaseNotifications::position(DatabaseNotificationsPosition::Sidebar);
+```
+
 ## Custom Notification Views
 
 ```php

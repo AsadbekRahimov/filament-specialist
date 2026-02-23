@@ -340,6 +340,14 @@ Action::make('preview')
     ->schema([...])
 ```
 
+### Sticky Modal Header/Footer (v4.5+/v5)
+```php
+Action::make('edit')
+    ->schema([/* ... many fields ... */])
+    ->stickyModalHeader()  // Header stays visible when scrolling
+    ->stickyModalFooter()  // Submit button stays visible when scrolling
+```
+
 ## Trigger Styles
 
 ```php
@@ -378,15 +386,26 @@ Action::make('copy')
 ### Authorization
 ```php
 Action::make('edit')
-    ->authorize('update')
-    ->authorizationTooltip()
+    ->authorize('update')               // Check policy ability
+    ->authorizationTooltip()            // Show tooltip when unauthorized
     ->visible(fn () => auth()->user()->can('update', $this->record))
+
+// Custom unauthorized notification (v4.5+/v5)
+Action::make('delete')
+    ->authorize('delete')
+    ->authorizationNotification(
+        Notification::make()
+            ->title('Cannot delete')
+            ->body('You do not have permission to delete this record.')
+            ->danger()
+    )
 ```
 
 ### Action Grouping
 ```php
 use Filament\Actions\ActionGroup;
 
+// Dropdown menu (default)
 ActionGroup::make([
     Action::make('edit'),
     Action::make('delete'),
@@ -395,6 +414,71 @@ ActionGroup::make([
 ->icon('heroicon-o-ellipsis-vertical')
 ->color('gray')
 ->button()
+
+// Button group (no dropdown, side-by-side buttons)
+ActionGroup::make([
+    Action::make('approve')->color('success'),
+    Action::make('reject')->color('danger'),
+])
+->buttonGroup()
+
+// Dropdown placement
+ActionGroup::make([...])
+    ->dropdownPlacement('bottom-end') // top, bottom, left, right + -start/-end
+
+// Dividers between items
+ActionGroup::make([
+    Action::make('edit'),
+    Action::make('duplicate'),
+    ActionGroup::DIVIDER,
+    Action::make('delete')->color('danger'),
+])
+```
+
+### Nested Action Modals (v4.5+/v5)
+```php
+// Child modal overlays parent instead of closing it
+Action::make('edit')
+    ->schema([
+        TextInput::make('name'),
+        Select::make('category_id')
+            ->afterContent(
+                Action::make('createCategory')
+                    ->schema([
+                        TextInput::make('name')->required(),
+                    ])
+                    ->action(function (array $data, Set $set): void {
+                        $category = Category::create($data);
+                        $set('category_id', $category->id);
+                    })
+                    ->overlayParentActions() // Keep parent modal visible behind
+            ),
+    ])
+
+// Cancel parent actions when child action runs
+Action::make('review')
+    ->schema([...])
+    ->action(function (array $data): void {
+        // ...
+    })
+    ->registerModalActions([
+        Action::make('reject')
+            ->requiresConfirmation()
+            ->action(function (Model $record): void {
+                $record->reject();
+            })
+            ->cancelParentActions() // Close parent modal chain
+    ])
+
+// Access parent action data from nested actions via $mountedActions
+Action::make('parent')
+    ->schema([TextInput::make('name')])
+    ->registerModalActions([
+        Action::make('child')
+            ->action(function (array $mountedActions): void {
+                $parentData = $mountedActions[0]->getFormData();
+            }),
+    ])
 ```
 
 ### After Action Side Effects

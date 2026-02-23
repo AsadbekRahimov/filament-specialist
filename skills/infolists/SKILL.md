@@ -173,10 +173,19 @@ Group::make([
 // Label
 ->label('Customer Name')
 ->hiddenLabel()
+->inlineLabel()
 
-// Visibility
+// Visibility (server-side)
 ->visible(fn (?string $state) => filled($state))
 ->hidden(fn () => ! auth()->user()->isAdmin())
+
+// Client-side visibility - NO server round-trip (v4.5+/v5)
+->hiddenJs(<<<'JS'
+    $get('role') !== 'staff'
+JS)
+->visibleJs(<<<'JS'
+    $get('role') === 'staff'
+JS)
 
 // Placeholder
 ->placeholder('Not provided')
@@ -191,6 +200,34 @@ Group::make([
 // Column span
 ->columnSpan(2)
 ->columnSpanFull()
+
+// Text handling
+->limit(50)             // Character limit
+->words(10)             // Word limit
+->lineClamp(2)          // CSS line clamp
+->wrap(false)           // Prevent wrapping
+
+// Date tooltips (v4.5+/v5)
+->since()->dateTooltip()        // "2h ago" with full date tooltip
+->since()->dateTimeTooltip()    // "2h ago" with datetime tooltip
+->dateTime()->sinceTooltip()    // Datetime with relative tooltip
+```
+
+## Entry Slots (v4.5+/v5)
+
+Entries have slots for inserting extra content (text, components, actions):
+
+```php
+use Filament\Actions\Action;
+
+TextEntry::make('name')
+    ->aboveLabel('Required field')
+    ->afterLabel(Action::make('help')->icon('heroicon-o-question-mark-circle'))
+    ->belowContent('This is the user\'s legal name.')
+
+// Available slots:
+// aboveLabel(), beforeLabel(), afterLabel(), belowLabel()
+// aboveContent(), beforeContent(), afterContent(), belowContent()
 ```
 
 ## Complete Example
