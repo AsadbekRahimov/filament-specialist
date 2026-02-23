@@ -233,6 +233,31 @@ public static function table(Table $table): Table
         ->summarize(Count::make()),
 ])
 
+// Responsive row layouts
+use Filament\Tables\Columns\Layout\Split;
+use Filament\Tables\Columns\Layout\Stack;
+use Filament\Tables\Columns\Layout\Panel;
+
+->columns([
+    Split::make([
+        ImageColumn::make('avatar')->circular()->grow(false),
+        Stack::make([
+            TextColumn::make('name')->weight(FontWeight::Bold),
+            TextColumn::make('email')->color('gray'),
+        ]),
+        TextColumn::make('status')->badge()->grow(false),
+    ]),
+    Panel::make([
+        TextColumn::make('description'),
+    ])->collapsible(),
+])
+
+// Content grid (card-style layout)
+->contentGrid(['md' => 2, 'xl' => 3])
+
+// Stacked on mobile shortcut
+TextColumn::make('email')->stackedOnMobile()
+
 // Empty state
 ->emptyStateHeading('No posts yet')
 ->emptyStateDescription('Create your first post to get started.')

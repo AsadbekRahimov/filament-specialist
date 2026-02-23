@@ -329,6 +329,91 @@ use Filament\Tables\Grouping\Group;
 ->persistColumnSearchesInSession()
 ```
 
+## Responsive Table Layouts
+
+### Stacked on Mobile
+```php
+use Filament\Tables\Columns\Layout\Split;
+use Filament\Tables\Columns\Layout\Stack;
+
+->columns([
+    Split::make([
+        ImageColumn::make('avatar')
+            ->circular()
+            ->grow(false),
+        TextColumn::make('name')
+            ->searchable()
+            ->sortable()
+            ->weight(FontWeight::Bold),
+        TextColumn::make('email')
+            ->searchable(),
+        TextColumn::make('status')
+            ->badge()
+            ->grow(false),
+    ]),
+])
+```
+
+### Stack Layout
+```php
+->columns([
+    Split::make([
+        ImageColumn::make('avatar')
+            ->circular()
+            ->grow(false),
+        Stack::make([
+            TextColumn::make('name')
+                ->weight(FontWeight::Bold),
+            TextColumn::make('email')
+                ->color('gray'),
+        ]),
+        TextColumn::make('status')
+            ->badge()
+            ->grow(false),
+    ]),
+])
+```
+
+### Grid Layout
+```php
+use Filament\Tables\Columns\Layout\Grid;
+
+->columns([
+    Grid::make(['md' => 2, 'xl' => 3])
+        ->schema([
+            Stack::make([
+                ImageColumn::make('image'),
+                TextColumn::make('name')->weight(FontWeight::Bold),
+                TextColumn::make('price')->money('USD'),
+            ]),
+        ]),
+])
+->contentGrid(['md' => 2, 'xl' => 3])
+```
+
+### Panel Layout
+```php
+use Filament\Tables\Columns\Layout\Panel;
+
+->columns([
+    Split::make([
+        TextColumn::make('name'),
+        TextColumn::make('status')->badge(),
+    ]),
+    Panel::make([
+        TextColumn::make('description'),
+    ])->collapsible(),
+])
+```
+
+### Stacked on Mobile Shortcut
+```php
+TextColumn::make('email')
+    ->stackedOnMobile()
+
+// Equivalent to hiding on mobile and showing in split layout
+```
+
 ## Empty State
 
 ```php
