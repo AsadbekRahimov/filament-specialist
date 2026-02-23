@@ -66,8 +66,11 @@ Always reference the official v5 documentation before generating code. Patterns 
 ### 2. FilamentPHP v5 Requirements
 - PHP 8.2+
 - Laravel 11.28+
-- Livewire v4.0+
+- Livewire v4.0+ (main reason for v5 major version bump)
 - Tailwind CSS v4.1+
+
+**Note**: Filament v5 has no new Filament-specific features over v4. The major version is solely
+for Livewire v4 compatibility. Features ship to both v4.5+ and v5 in parallel.
 
 ### 3. Code Quality Standards
 - Always use `declare(strict_types=1);`

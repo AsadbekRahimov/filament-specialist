@@ -56,18 +56,34 @@ Expert FilamentPHP v5 assistant for Claude Code. Generates resources, forms, tab
 
 Run the `skills/docs/rebuildFilamentDocs.sh` script to populate the `skills/docs/references/` directory with the official FilamentPHP v5 documentation from GitHub.
 
-## Key Changes from Filament v4
+## Filament v5 vs v4
 
-- **Schemas package**: New foundational package for building UIs declaratively
-- **Livewire v4**: Requires Livewire v4.0+ (was v3 in Filament v4)
-- **Tailwind CSS v4**: Requires Tailwind CSS v4.1+ (was v3 in Filament v4)
-- **Schema-based components**: Forms and infolists now share the schemas foundation
-- **Prime components**: New static content renderers (text, images, buttons)
+Filament v5 has **no new Filament-specific features** over v4. The major version bump is solely for
+**Livewire v4 compatibility**. Features ship to both v4 and v5 in parallel. The features documented
+in this skill are available in Filament v4.x (4.5+) and v5.x.
+
+### Key Dependency Changes (v4 → v5)
+- **Livewire v4**: Required (was v3 in Filament v4)
+- **Tailwind CSS v4**: Required (was v3 in Filament v4)
+
+### Notable Features (available in both v4.5+ and v5)
+- **Schemas package**: Foundational package for building UIs declaratively
+- **Schema-based components**: Forms and infolists share the schemas foundation
+- **Prime components**: Static content renderers (text, images, buttons)
 - **Import/Export actions**: Built-in import and export functionality
-- **Code editor field**: New code syntax editor form field
-- **Slider field**: New range slider input field
-- **Callout schema component**: New callout/alert layout component
-- **Enhanced reactivity**: `afterStateUpdatedJs()`, `partiallyRenderComponentsAfterStateUpdated()`
+- **Code editor field**: Code syntax editor form field
+- **Slider field**: Range slider input field
+- **ModalTableSelect**: Pick records from a table modal
+- **Flex layout**: Sidebar patterns and flexible layouts
+- **FusedGroup**: Visually fused input groups
+- **Enhanced reactivity**: `afterStateUpdatedJs()`, `hiddenJs()`, `partiallyRenderComponentsAfterStateUpdated()`
+- **Type-safe Get**: `$get->string()`, `$get->integer()`, `$get->float()`, etc.
+- **RichEditor enhancements**: JSON storage, merge tags, mentions, floating toolbars, text colors
 - **Rate limiting**: Built-in action rate limiting
 - **Keyboard shortcuts**: Action keyboard bindings support
-- **TestAction helper**: New `TestAction::make()` for cleaner testing syntax
+- **TestAction helper**: `TestAction::make()` for cleaner testing syntax
+- **Clusters**: Hierarchical navigation grouping
+- **Resource sub-navigation**: `getRecordSubNavigation()`
+- **Listing tabs with badges**: `getTabs()` with `modifyQueryUsing()`
+- **Dashboard FilterAction**: Modal-based filter alternative
+- **Section-level save**: `saveFormComponentOnly()` on edit pages

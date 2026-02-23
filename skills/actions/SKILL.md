@@ -61,6 +61,9 @@ use Filament\Tables\Actions\BulkActionGroup;
 
 ### Schema/Form Component Actions
 ```php
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
+
 TextInput::make('title')
     ->afterContent(
         Action::make('generateSlug')
@@ -68,6 +71,27 @@ TextInput::make('title')
             ->action(function (Get $schemaGet, Set $schemaSet): void {
                 $schemaSet('slug', str($schemaGet('title'))->slug());
             })
+    )
+
+// Suffix action
+TextInput::make('url')
+    ->suffixAction(
+        Action::make('visit')
+            ->icon('heroicon-o-arrow-top-right-on-square')
+            ->url(fn (Get $get) => $get('url'))
+            ->openUrlInNewTab()
+    )
+```
+
+### Infolist Entry Actions (NEW in v5)
+```php
+use Filament\Infolists\Components\Actions\Action;
+
+TextEntry::make('email')
+    ->afterContent(
+        Action::make('send_email')
+            ->icon('heroicon-o-envelope')
+            ->action(fn (Model $record) => /* ... */)
     )
 ```
 
@@ -84,23 +108,191 @@ use Filament\Actions\ReplicateAction;
 ```
 
 ## Import Action (NEW in v5)
+
+### Generate Importer Class
+```bash
+php artisan make:filament-import ProductImporter
+```
+
+### Importer Class
+```php
+<?php
+
+declare(strict_types=1);
+
+namespace App\Filament\Imports;
+
+use App\Models\Product;
+use Filament\Actions\Imports\ImportColumn;
+use Filament\Actions\Imports\Importer;
+use Filament\Actions\Imports\Models\Import;
+
+class ProductImporter extends Importer
+{
+    protected static ?string $model = Product::class;
+
+    public static function getColumns(): array
+    {
+        return [
+            ImportColumn::make('name')
+                ->requiredMapping()
+                ->rules(['required', 'max:255']),
+            ImportColumn::make('sku')
+                ->requiredMapping()
+                ->rules(['required'])
+                ->example('PROD-001'),
+            ImportColumn::make('price')
+                ->numeric()
+                ->rules(['required', 'numeric', 'min:0']),
+            ImportColumn::make('description')
+                ->rules(['nullable', 'string']),
+            ImportColumn::make('category')
+                ->relationship(resolveUsing: 'name'),
+            ImportColumn::make('is_active')
+                ->boolean()
+                ->rules(['boolean']),
+        ];
+    }
+
+    public function resolveRecord(): ?Product
+    {
+        // Update existing or create new
+        return Product::firstOrNew(['sku' => $this->data['sku']]);
+
+        // Always create new
+        // return new Product();
+    }
+
+    public static function getCompletedNotificationBody(Import $import): string
+    {
+        $body = 'Your product import has completed. ' . number_format($import->successful_rows) . ' rows imported.';
+
+        if ($failedRowsCount = $import->getFailedRowsCount()) {
+            $body .= ' ' . number_format($failedRowsCount) . ' rows failed.';
+        }
+
+        return $body;
+    }
+}
+```
+
+### Using Import Action
 ```php
 use Filament\Actions\ImportAction;
 use App\Filament\Imports\ProductImporter;
 
-Action::make('import')
-    ->action(ImportAction::make()
-        ->importer(ProductImporter::class))
+// As page header action
+protected function getHeaderActions(): array
+{
+    return [
+        ImportAction::make()
+            ->importer(ProductImporter::class),
+    ];
+}
+
+// As table toolbar action
+->toolbarActions([
+    Tables\Actions\ImportAction::make()
+        ->importer(ProductImporter::class),
+])
+```
+
+### Import Options
+```php
+ImportAction::make()
+    ->importer(ProductImporter::class)
+    ->csvDelimiter(';')          // Custom CSV delimiter
+    ->chunkSize(500)             // Rows per chunk (default: 100)
+    ->maxRows(10000)             // Maximum rows allowed
+    ->job(CustomImportJob::class) // Custom job class
 ```
 
 ## Export Action (NEW in v5)
+
+### Generate Exporter Class
+```bash
+php artisan make:filament-export ProductExporter
+```
+
+### Exporter Class
+```php
+<?php
+
+declare(strict_types=1);
+
+namespace App\Filament\Exports;
+
+use App\Models\Product;
+use Filament\Actions\Exports\ExportColumn;
+use Filament\Actions\Exports\Exporter;
+use Filament\Actions\Exports\Models\Export;
+
+class ProductExporter extends Exporter
+{
+    protected static ?string $model = Product::class;
+
+    public static function getColumns(): array
+    {
+        return [
+            ExportColumn::make('name')
+                ->label('Product Name'),
+            ExportColumn::make('sku'),
+            ExportColumn::make('price')
+                ->formatStateUsing(fn (int $state): string =>
+                    number_format($state / 100, 2)),
+            ExportColumn::make('category.name')
+                ->label('Category'),
+            ExportColumn::make('is_active')
+                ->label('Active')
+                ->formatStateUsing(fn (bool $state): string =>
+                    $state ? 'Yes' : 'No'),
+            ExportColumn::make('created_at')
+                ->label('Created Date'),
+        ];
+    }
+
+    public static function getCompletedNotificationBody(Export $export): string
+    {
+        $body = 'Your product export has completed. ' . number_format($export->successful_rows) . ' rows exported.';
+
+        if ($failedRowsCount = $export->getFailedRowsCount()) {
+            $body .= ' ' . number_format($failedRowsCount) . ' rows failed.';
+        }
+
+        return $body;
+    }
+}
+```
+
+### Using Export Action
 ```php
 use Filament\Actions\ExportAction;
 use App\Filament\Exports\ProductExporter;
 
-Action::make('export')
-    ->action(ExportAction::make()
-        ->exporter(ProductExporter::class))
+// As page header action
+protected function getHeaderActions(): array
+{
+    return [
+        ExportAction::make()
+            ->exporter(ProductExporter::class),
+    ];
+}
+
+// As table toolbar action
+->toolbarActions([
+    Tables\Actions\ExportAction::make()
+        ->exporter(ProductExporter::class),
+])
+```
+
+### Export Options
+```php
+ExportAction::make()
+    ->exporter(ProductExporter::class)
+    ->fileName(fn (Export $export): string => "products-{$export->getKey()}")
+    ->fileDisk('s3')
+    ->modifyQueryUsing(fn (Builder $query) => $query->where('is_active', true))
+    ->columnMapping(false) // Disable column selection UI
 ```
 
 ## Modal Configuration

@@ -158,24 +158,36 @@ TextInput::make('title')
 ```
 
 ### 7. Upgrade v4 to v5 Issues
+**Context**: Filament v5 has NO new Filament-specific features over v4. The major version bump is
+solely for Livewire v4 compatibility. Features continue to ship to both v4 and v5 in parallel.
+
 **Symptoms**: Various errors after upgrading
-**Common Breaking Changes**:
-- `Filament\Forms\Components\Card` → `Filament\Schemas\Components\Section`
-- `Filament\Forms\Components\Placeholder` → Prime components
-- Table actions API changed to `->recordActions()` and `->toolbarActions()`
-- Schema system replaces some form patterns
-- Livewire v4 required (lifecycle hook changes)
-- Tailwind CSS v4 required
+**Key Breaking Changes**:
+- Livewire v4 required (lifecycle hook changes, `wire:model` behavior change)
+- Tailwind CSS v4 required (biggest hurdle for custom themes)
+- `wire:model` no longer responds to events bubbling from child elements (add `.deep` if needed)
+- Component tags must be self-closing: `<livewire:component />` (not `<livewire:component>`)
+- Config keys renamed: `layout` → `component_layout`
+- `wire:transition` now uses View Transitions API (`.opacity` / `.duration` modifiers removed)
 
 **Solution**:
 ```bash
-# Run the automated upgrade tool
+# Step 1: Run the automated upgrade tool
 composer require filament/upgrade:"^5.0" -W --dev
 vendor/bin/filament-v5
+
+# Step 2: Update filament dependency
 composer require filament/filament:"^5.0" -W --no-update
 composer update
+
+# Step 3: Remove upgrade tool
 composer remove filament/upgrade --dev
 ```
+
+**Notes**:
+- If you have custom Livewire components, also follow the Livewire v4 upgrade guide
+- Some third-party plugins may not support v5 yet; check compatibility first
+- The Filament team pushes features to both v4 and v5, so no rush to upgrade
 
 ## Cache Clearing Commands
 
