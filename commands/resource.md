@@ -39,7 +39,26 @@ php artisan make:filament-resource Customer --view
 php artisan make:filament-resource Customer --model --migration --factory
 ```
 
-## Resource Structure (v5)
+## Resource File Structure (v5)
+
+In Filament v5, `make:filament-resource` generates a more organized file structure with
+separate Schema and Table classes:
+
+```
+app/Filament/Resources/
+└── Customers/
+    ├── CustomerResource.php
+    ├── Pages/
+    │   ├── CreateCustomer.php
+    │   ├── EditCustomer.php
+    │   └── ListCustomers.php
+    ├── Schemas/
+    │   └── CustomerForm.php        # Separate form schema class (NEW in v5)
+    └── Tables/
+        └── CustomersTable.php      # Separate table config class (NEW in v5)
+```
+
+### Resource Class
 
 ```php
 <?php
@@ -48,8 +67,10 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\CustomerResource\Pages;
-use App\Filament\Resources\CustomerResource\RelationManagers;
+use App\Filament\Resources\Customers\Pages;
+use App\Filament\Resources\Customers\RelationManagers;
+use App\Filament\Resources\Customers\Schemas\CustomerForm;
+use App\Filament\Resources\Customers\Tables\CustomersTable;
 use App\Models\Customer;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
@@ -65,28 +86,12 @@ class CustomerResource extends Resource
 
     public static function form(Schema $schema): Schema
     {
-        return $schema->components([
-            // Form fields defined here or in separate schema class
-        ]);
+        return CustomerForm::configure($schema);
     }
 
     public static function table(Table $table): Table
     {
-        return $table
-            ->columns([
-                // Table columns
-            ])
-            ->filters([
-                // Filters
-            ])
-            ->recordActions([
-                Tables\Actions\EditAction::make(),
-            ])
-            ->toolbarActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
-            ]);
+        return CustomersTable::configure($table);
     }
 
     public static function getRelations(): array
@@ -105,6 +110,117 @@ class CustomerResource extends Resource
         ];
     }
 }
+```
+
+### Separate Form Schema Class (NEW in v5)
+
+```php
+<?php
+
+declare(strict_types=1);
+
+namespace App\Filament\Resources\Customers\Schemas;
+
+use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Schema;
+
+class CustomerForm
+{
+    public static function configure(Schema $schema): Schema
+    {
+        return $schema->components([
+            TextInput::make('name')->required(),
+            TextInput::make('email')->email()->required(),
+        ]);
+    }
+}
+```
+
+### Separate Table Config Class (NEW in v5)
+
+```php
+<?php
+
+declare(strict_types=1);
+
+namespace App\Filament\Resources\Customers\Tables;
+
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Table;
+
+class CustomersTable
+{
+    public static function configure(Table $table): Table
+    {
+        return $table
+            ->columns([
+                TextColumn::make('name'),
+                TextColumn::make('email'),
+            ])
+            ->filters([
+                // Filters
+            ])
+            ->recordActions([
+                EditAction::make(),
+            ])
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
+                ]),
+            ]);
+    }
+}
+```
+
+### Inline Form/Table (Alternative)
+
+You can also define forms and tables inline in the resource class:
+
+```php
+public static function form(Schema $schema): Schema
+{
+    return $schema->components([
+        TextInput::make('name')->required(),
+        TextInput::make('email')->email()->required(),
+    ]);
+}
+
+public static function table(Table $table): Table
+{
+    return $table
+        ->columns([
+            TextColumn::make('name'),
+            TextColumn::make('email'),
+        ])
+        ->recordActions([
+            EditAction::make(),
+        ])
+        ->toolbarActions([
+            BulkActionGroup::make([
+                DeleteBulkAction::make(),
+            ]),
+        ]);
+}
+```
+
+### Hiding Fields Based on Operation (v5)
+
+```php
+use Filament\Support\Enums\Operation;
+
+TextInput::make('password')
+    ->password()
+    ->required()
+    ->hiddenOn(Operation::Edit)
+
+// Or the inverse:
+TextInput::make('password')
+    ->password()
+    ->required()
+    ->visibleOn(Operation::Create)
 ```
 
 ## Form Field Reference
