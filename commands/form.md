@@ -47,7 +47,16 @@ argument-hint: "<FormDescription> with <field1>, <field2>, ..."
 | Grid | `Grid::make()` | Multi-column layouts |
 | Fieldset | `Fieldset::make()` | Bordered field groups |
 | Wizard | `Wizard::make()` | Multi-step forms |
-| Split | `Split::make()` | Side-by-side layouts |
+| Flex | `Flex::make()` | Sidebar/flexible layouts (NEW in v5) |
+| FusedGroup | `FusedGroup::make()` | Fused fields (NEW in v5) |
+
+### NEW in v5
+
+| Field/Component | Class | Use Case |
+|----------------|-------|----------|
+| ModalTableSelect | `ModalTableSelect::make()` | Pick from table modal |
+| FusedGroup | `FusedGroup::make()` | Visually fused inputs |
+| Flex | `Flex::make()` | Flexible sidebar patterns |
 
 ## Example: Complete Form
 
@@ -182,25 +191,40 @@ FileUpload::make('document')
 ## Reactivity Patterns
 
 ```php
-// Re-render on change
+// Re-render on change (server round-trip)
 TextInput::make('title')
     ->live()
     ->afterStateUpdated(fn (Set $set, ?string $state) =>
         $set('slug', str($state)->slug())
     )
 
-// Client-side only (no server round-trip)
+// Client-side only - NO server round-trip (NEW in v5)
 TextInput::make('title')
     ->afterStateUpdatedJs(<<<'JS'
-        $set('slug', $get('title').toLowerCase().replaceAll(' ', '-'))
+        $set('slug', ($state ?? '').replaceAll(' ', '-').toLowerCase())
     JS)
 
-// Conditional visibility
+// Client-side visibility - NO server round-trip (NEW in v5)
+Toggle::make('is_admin')
+    ->hiddenJs(<<<'JS'
+        $get('role') !== 'staff'
+    JS)
+
+// Partial rendering - only re-render specific fields (NEW in v5)
+TextInput::make('title')
+    ->live()
+    ->partiallyRenderComponentsAfterStateUpdated(['slug'])
+
+// Type-safe Get (NEW in v5)
+TextInput::make('total')
+    ->visible(fn (Get $get) => $get->float('price') > 0)
+
+// Conditional visibility (server-side)
 TextInput::make('other_reason')
     ->visible(fn (Get $get) => $get('reason') === 'other')
 
 // Conditional field based on operation
 TextInput::make('password')
     ->required(fn (string $operation) => $operation === 'create')
-    ->dehydrated(fn (?string $state) => filled($state))
+    ->saved(fn (?string $state): bool => filled($state))
 ```
