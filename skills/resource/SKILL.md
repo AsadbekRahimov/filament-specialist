@@ -78,6 +78,54 @@ Create a policy and register it. Filament respects standard Laravel policy metho
 - `viewAny()`, `view()`, `create()`, `update()`, `delete()`
 - `forceDelete()`, `restore()` (for soft deletes)
 
+```bash
+php artisan make:policy ProductPolicy --model=Product
+```
+
+```php
+<?php
+
+declare(strict_types=1);
+
+namespace App\Policies;
+
+use App\Models\Product;
+use App\Models\User;
+
+class ProductPolicy
+{
+    public function viewAny(User $user): bool
+    {
+        return $user->hasPermissionTo('view products');
+    }
+
+    public function view(User $user, Product $product): bool
+    {
+        return $user->hasPermissionTo('view products');
+    }
+
+    public function create(User $user): bool
+    {
+        return $user->hasPermissionTo('create products');
+    }
+
+    public function update(User $user, Product $product): bool
+    {
+        return $user->hasPermissionTo('edit products');
+    }
+
+    public function delete(User $user, Product $product): bool
+    {
+        return $user->hasPermissionTo('delete products');
+    }
+}
+```
+
+Enable strict authorization in the panel to throw exceptions for missing policies:
+```php
+$panel->strictAuthorization()
+```
+
 ## Resource Configuration Options
 
 ```php
@@ -195,6 +243,106 @@ Section::make('Settings')
             })
             ->visible($operation === 'edit'),
     ])
+```
+
+## Multi-Tenancy
+
+### Scoping Resources to Tenant
+```php
+// Option 1: Automatic scoping via BelongsToTenant trait on model
+use Filament\Models\Concerns\BelongsToTenant;
+
+class Product extends Model
+{
+    use BelongsToTenant;
+}
+
+// Option 2: Manual query scoping in resource
+public static function getEloquentQuery(): Builder
+{
+    return parent::getEloquentQuery()
+        ->whereBelongsTo(Filament::getTenant());
+}
+```
+
+### Tenant-Aware Resource Registration
+```php
+// Panel provider
+$panel
+    ->tenant(Team::class)
+    ->tenantRegistration(RegisterTeam::class)
+    ->tenantProfile(EditTeamProfile::class)
+```
+
+### Automatically Set Tenant on Create
+```php
+// In CreateRecord page
+protected function mutateFormDataBeforeCreate(array $data): array
+{
+    $data['team_id'] = Filament::getTenant()->id;
+    return $data;
+}
+```
+
+## Nested Resources
+
+```bash
+php artisan make:filament-resource Product --parent=CategoryResource
+```
+
+Nested resources display within a parent resource, e.g., `/categories/{category}/products`.
+
+## Singular Resources
+
+For models with only one record (e.g., settings):
+
+```bash
+php artisan make:filament-resource Settings --singular
+```
+
+Generates a single manage page instead of list/create/edit pages.
+
+## Global Search Configuration
+
+```php
+// Enable global search on resource
+protected static ?string $recordTitleAttribute = 'name';
+
+// Add extra searchable attributes
+public static function getGloballySearchableAttributes(): array
+{
+    return ['name', 'sku', 'description', 'category.name'];
+}
+
+// Customize search result details
+public static function getGlobalSearchResultDetails(Model $record): array
+{
+    return [
+        'Category' => $record->category->name,
+        'Price' => '$' . number_format($record->price / 100, 2),
+    ];
+}
+
+// Customize search result title
+public static function getGlobalSearchResultTitle(Model $record): string
+{
+    return "{$record->name} ({$record->sku})";
+}
+
+// Customize search result URL
+public static function getGlobalSearchResultUrl(Model $record): string
+{
+    return static::getUrl('edit', ['record' => $record]);
+}
+
+// Limit results
+protected static int $globalSearchResultsLimit = 10;
+
+// Eager load relationships for search results
+public static function getGlobalSearchEloquentQuery(): Builder
+{
+    return parent::getGlobalSearchEloquentQuery()->with(['category']);
+}
 ```
 
 ## Output

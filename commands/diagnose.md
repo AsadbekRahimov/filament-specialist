@@ -201,6 +201,103 @@ php artisan optimize:clear
 composer dump-autoload
 ```
 
+### 8. Multi-Tenancy Issues
+**Symptoms**: Resources showing records from all tenants, or "403 Forbidden" errors
+**Causes**:
+- Tenant not set on model creation
+- Missing `BelongsToTenant` trait
+- Tenant relationship not defined
+- `canAccessTenant()` returning false
+
+**Solution**:
+```php
+// Option 1: Use trait on model
+use Filament\Models\Concerns\BelongsToTenant;
+
+class Product extends Model
+{
+    use BelongsToTenant;
+}
+
+// Option 2: Manually scope in resource
+public static function getEloquentQuery(): Builder
+{
+    return parent::getEloquentQuery()
+        ->whereBelongsTo(Filament::getTenant());
+}
+
+// Set tenant on creation
+protected function mutateFormDataBeforeCreate(array $data): array
+{
+    $data['team_id'] = Filament::getTenant()->id;
+    return $data;
+}
+```
+
+### 9. Assets Not Loading / Styles Broken
+**Symptoms**: Filament pages appear unstyled or JavaScript not working
+**Causes**:
+- Assets not published
+- Tailwind CSS v4 conflict with custom theme
+- Vite not configured correctly
+
+**Solution**:
+```bash
+# Publish and rebuild assets
+php artisan filament:assets
+npm run build
+
+# If using custom theme, ensure Tailwind v4 compatible
+# Check vite.config.js includes Filament plugin
+```
+
+### 10. Relation Manager Not Showing
+**Symptoms**: Relation manager tab/section missing from edit/view page
+**Causes**:
+- Not registered in resource `getRelations()`
+- Relationship doesn't exist on model
+- Authorization prevents viewing
+
+**Solution**:
+```php
+// Register in resource
+public static function getRelations(): array
+{
+    return [
+        RelationManagers\OrdersRelationManager::class,
+    ];
+}
+
+// Ensure relationship exists on model
+public function orders(): HasMany
+{
+    return $this->hasMany(Order::class);
+}
+```
+
+### 11. Custom Page Not Routing
+**Symptoms**: Custom page returns 404
+**Causes**:
+- Not registered in resource `getPages()`
+- Route slug conflict
+- Missing route cache clear
+
+**Solution**:
+```php
+public static function getPages(): array
+{
+    return [
+        'index' => Pages\ListCustomers::route('/'),
+        'create' => Pages\CreateCustomer::route('/create'),
+        'edit' => Pages\EditCustomer::route('/{record}/edit'),
+        'activity' => Pages\CustomerActivity::route('/{record}/activity'),
+    ];
+}
+```
+```bash
+php artisan route:clear
+```
+
 ## Debug Checklist
 
 1. Check PHP version (8.2+ required)

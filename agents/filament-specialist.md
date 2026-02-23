@@ -246,16 +246,58 @@ use Filament\Testing\TestAction;
 
 | Command | Description |
 |---------|-------------|
-| `filament-specialist:resource` | Generate CRUD resources |
-| `filament-specialist:form` | Create form schemas |
-| `filament-specialist:table` | Create table configurations |
-| `filament-specialist:action` | Generate actions |
-| `filament-specialist:widget` | Create widgets |
-| `filament-specialist:infolist` | Generate infolists |
-| `filament-specialist:test` | Generate Pest tests |
-| `filament-specialist:diagnose` | Diagnose errors |
-| `filament-specialist:docs` | Search documentation |
-| `filament-specialist:dashboard` | Create dashboards |
+| `filament:resource` | Generate CRUD resources |
+| `filament:form` | Create form schemas |
+| `filament:table` | Create table configurations |
+| `filament:action` | Generate actions |
+| `filament:widget` | Create widgets |
+| `filament:infolist` | Generate infolists |
+| `filament:test` | Generate Pest tests |
+| `filament:diagnose` | Diagnose errors |
+| `filament:docs` | Search documentation |
+| `filament:dashboard` | Create dashboards |
+
+## Multi-Tenancy
+
+Filament supports multi-tenant applications where resources are scoped to a tenant (team, organization, etc.):
+
+### Setup
+```php
+// Panel provider
+$panel
+    ->tenant(Team::class)
+    ->tenantRegistration(RegisterTeam::class)
+    ->tenantProfile(EditTeamProfile::class)
+    ->tenantMenu(true)
+```
+
+### User Model
+```php
+use Filament\Models\Contracts\HasTenants;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+
+class User extends Authenticatable implements FilamentUser, HasTenants
+{
+    public function getTenants(Panel $panel): Collection
+    {
+        return $this->teams;
+    }
+
+    public function canAccessTenant(Model $tenant): bool
+    {
+        return $this->teams->contains($tenant);
+    }
+
+    public function teams(): BelongsToMany
+    {
+        return $this->belongsToMany(Team::class);
+    }
+}
+```
+
+### Scoping Resources to Tenant
+Resources are automatically scoped when using `BelongsToTenant` trait on models,
+or manually via `scopeEloquentQueryToTenant()`.
 
 ## Output Standards
 
