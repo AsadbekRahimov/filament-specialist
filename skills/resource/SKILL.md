@@ -110,6 +110,93 @@ public static function getEloquentQuery(): Builder
 }
 ```
 
+## Listing Page Tabs (NEW in v5)
+
+```php
+use Filament\Resources\Pages\ListRecords\Tab;
+
+public function getTabs(): array
+{
+    return [
+        'all' => Tab::make(),
+        'active' => Tab::make()
+            ->modifyQueryUsing(fn (Builder $query) => $query->where('active', true))
+            ->badge(Customer::query()->where('active', true)->count())
+            ->badgeColor('success'),
+        'inactive' => Tab::make()
+            ->modifyQueryUsing(fn (Builder $query) => $query->where('active', false)),
+    ];
+}
+
+public function getDefaultActiveTab(): string | int | null
+{
+    return 'active';
+}
+```
+
+## Record Sub-Navigation (NEW in v5)
+
+```php
+public static function getRecordSubNavigation(Page $page): array
+{
+    return $page->generateNavigationItems([
+        Pages\ViewCustomer::class,
+        Pages\EditCustomer::class,
+        Pages\ManageCustomerAddresses::class,
+    ]);
+}
+
+protected static ?SubNavigationPosition $subNavigationPosition = SubNavigationPosition::End;
+```
+
+## Clusters (NEW in v5)
+
+Group resources under a cluster for hierarchical navigation:
+
+```php
+// In resource class
+protected static ?string $cluster = SettingsCluster::class;
+```
+
+## Wizard-Based Creation
+
+```php
+class CreateCategory extends CreateRecord
+{
+    use CreateRecord\Concerns\HasWizard;
+
+    protected function getSteps(): array
+    {
+        return [
+            Step::make('Name')->schema([
+                TextInput::make('name')->required()->live()
+                    ->afterStateUpdated(fn ($state, Set $set) =>
+                        $set('slug', Str::slug($state))),
+                TextInput::make('slug')->required()->unique(ignoreRecord: true),
+            ]),
+            Step::make('Details')->schema([
+                RichEditor::make('description')->columnSpanFull(),
+            ]),
+        ];
+    }
+}
+```
+
+## Section-Level Save (Edit Pages)
+
+```php
+Section::make('Settings')
+    ->schema([...])
+    ->footerActions([
+        fn (string $operation): Action => Action::make('save')
+            ->action(function (Section $component, EditRecord $livewire) {
+                $livewire->saveFormComponentOnly($component);
+                Notification::make()->title('Saved')->success()->send();
+            })
+            ->visible($operation === 'edit'),
+    ])
+```
+
 ## Output
 
 Generated files:

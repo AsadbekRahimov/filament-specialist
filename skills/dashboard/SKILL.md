@@ -166,6 +166,95 @@ class FilteredStats extends StatsOverviewWidget
 }
 ```
 
+## Dashboard with Filter Action Modal (NEW in v5)
+
+```php
+<?php
+
+declare(strict_types=1);
+
+namespace App\Filament\Pages;
+
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Select;
+use Filament\Pages\Dashboard as BaseDashboard;
+use Filament\Pages\Dashboard\Actions\FilterAction;
+use Filament\Pages\Dashboard\Concerns\HasFiltersAction;
+
+class Dashboard extends BaseDashboard
+{
+    use HasFiltersAction;
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            FilterAction::make()->schema([
+                Select::make('period')
+                    ->options([
+                        'today' => 'Today',
+                        'week' => 'This Week',
+                        'month' => 'This Month',
+                    ])
+                    ->default('month'),
+                DatePicker::make('startDate'),
+                DatePicker::make('endDate'),
+            ]),
+        ];
+    }
+}
+```
+
+Benefits over `HasFiltersForm`: filters don't take up page space, validation runs before applying, widgets don't reload until user clicks "Apply".
+
+## Widget Accessing Page Table Data (NEW in v5)
+
+```php
+// On the List page
+use Filament\Pages\Concerns\ExposesTableToWidgets;
+
+class ListProducts extends ListRecords
+{
+    use ExposesTableToWidgets;
+}
+
+// On the widget
+use Filament\Widgets\Concerns\InteractsWithPageTable;
+
+class ProductStats extends StatsOverviewWidget
+{
+    use InteractsWithPageTable;
+
+    protected function getTablePage(): string
+    {
+        return ListProducts::class;
+    }
+
+    protected function getStats(): array
+    {
+        return [
+            Stat::make('Total', $this->getPageTableQuery()->count()),
+            Stat::make('Revenue', '$' . number_format(
+                $this->getPageTableQuery()->sum('price') / 100, 2
+            )),
+        ];
+    }
+}
+```
+
+## Auto-Opening Action Modal on Page Load
+
+```php
+public $defaultAction = 'onboarding';
+
+public function onboardingAction(): Action
+{
+    return Action::make('onboarding')
+        ->modalHeading('Welcome')
+        ->schema([...])
+        ->visible(fn (): bool => ! auth()->user()->isOnBoarded());
+}
+```
+
 ## Custom Page
 
 ```php

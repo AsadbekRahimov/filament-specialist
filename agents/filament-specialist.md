@@ -85,6 +85,9 @@ php artisan make:filament-page
 php artisan make:filament-widget
 php artisan make:filament-panel
 php artisan make:filament-user
+php artisan make:filament-cluster
+php artisan make:filament-theme
+php artisan make:filament-rich-content-custom-block
 ```
 
 ### 5. Testing Integration
@@ -148,6 +151,77 @@ Functions accept injected parameters by name:
 ```php
 ->recordActions([...])    // Row-level actions
 ->toolbarActions([...])   // Header/toolbar actions including BulkActionGroup
+```
+
+### Clusters (NEW in v5)
+Group resources and pages into hierarchical navigation with sub-navigation:
+```php
+php artisan make:filament-cluster Settings
+// In resource: protected static ?string $cluster = SettingsCluster::class;
+```
+
+### Panel Configuration (Key v5 Features)
+```php
+$panel
+    ->spa()                          // SPA mode (no full page reloads)
+    ->spa(hasPrefetching: true)      // With link prefetching
+    ->unsavedChangesAlerts()         // Warn before navigating away
+    ->databaseTransactions()         // Wrap saves in DB transactions
+    ->strictAuthorization()          // Strict policy checking
+    ->sidebarCollapsibleOnDesktop()  // Collapsible sidebar
+    ->topNavigation()                // Top nav instead of sidebar
+```
+
+### Resource Sub-Navigation
+```php
+public static function getRecordSubNavigation(Page $page): array
+{
+    return $page->generateNavigationItems([
+        ViewCustomer::class,
+        EditCustomer::class,
+        ManageCustomerAddresses::class,
+    ]);
+}
+```
+
+### Listing Tabs with Badges
+```php
+public function getTabs(): array
+{
+    return [
+        'all' => Tab::make(),
+        'active' => Tab::make()
+            ->modifyQueryUsing(fn (Builder $query) => $query->where('active', true))
+            ->badge(Customer::query()->where('active', true)->count())
+            ->badgeColor('success'),
+    ];
+}
+```
+
+### Section-Level Save (Edit Pages)
+```php
+Section::make('Settings')
+    ->schema([...])
+    ->footerActions([
+        fn (string $operation): Action => Action::make('save')
+            ->action(function (Section $component, EditRecord $livewire) {
+                $livewire->saveFormComponentOnly($component);
+            })
+            ->visible($operation === 'edit'),
+    ])
+```
+
+### Client-Side Reactivity (NEW in v5)
+- `hiddenJs()` / `visibleJs()` - toggle visibility without server round-trip
+- `afterStateUpdatedJs()` - update fields client-side
+- `JsContent::make()` - dynamic JS-powered labels/content
+- `partiallyRenderComponentsAfterStateUpdated()` - re-render only specific fields
+
+### Type-safe Get (NEW in v5)
+```php
+$get->string('email');   $get->integer('age');
+$get->boolean('admin');  $get->date('published_at');
+$get->enum('status', StatusEnum::class);
 ```
 
 ### Testing (v5 API)
