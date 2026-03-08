@@ -1,6 +1,7 @@
 ---
-description: Diagnose and fix common FilamentPHP v5 errors and issues
-allowed-tools: ["Bash", "Glob", "Grep", "Read", "Write", "Edit"]
+name: filament-diagnose
+description: Diagnose and fix common FilamentPHP v5 errors and issues. Use when encountering Filament errors, debugging resources, troubleshooting configuration problems, or upgrading from v4 to v5.
+allowed-tools: Bash, Glob, Grep, Read, Write, Edit
 argument-hint: "<error message or description of the issue>"
 ---
 
@@ -167,7 +168,7 @@ solely for Livewire v4 compatibility. Features continue to ship to both v4 and v
 - Tailwind CSS v4 required (biggest hurdle for custom themes)
 - `wire:model` no longer responds to events bubbling from child elements (add `.deep` if needed)
 - Component tags must be self-closing: `<livewire:component />` (not `<livewire:component>`)
-- Config keys renamed: `layout` → `component_layout`
+- Config keys renamed: `layout` -> `component_layout`
 - `wire:transition` now uses View Transitions API (`.opacity` / `.duration` modifiers removed)
 
 **Solution**:
@@ -182,23 +183,6 @@ composer update
 
 # Step 3: Remove upgrade tool
 composer remove filament/upgrade --dev
-```
-
-**Notes**:
-- If you have custom Livewire components, also follow the Livewire v4 upgrade guide
-- Some third-party plugins may not support v5 yet; check compatibility first
-- The Filament team pushes features to both v4 and v5, so no rush to upgrade
-
-## Cache Clearing Commands
-
-```bash
-php artisan filament:cache-components
-php artisan cache:clear
-php artisan config:clear
-php artisan route:clear
-php artisan view:clear
-php artisan optimize:clear
-composer dump-autoload
 ```
 
 ### 8. Multi-Tenancy Issues
@@ -243,12 +227,8 @@ protected function mutateFormDataBeforeCreate(array $data): array
 
 **Solution**:
 ```bash
-# Publish and rebuild assets
 php artisan filament:assets
 npm run build
-
-# If using custom theme, ensure Tailwind v4 compatible
-# Check vite.config.js includes Filament plugin
 ```
 
 ### 10. Relation Manager Not Showing
@@ -260,7 +240,6 @@ npm run build
 
 **Solution**:
 ```php
-// Register in resource
 public static function getRelations(): array
 {
     return [
@@ -277,10 +256,6 @@ public function orders(): HasMany
 
 ### 11. Custom Page Not Routing
 **Symptoms**: Custom page returns 404
-**Causes**:
-- Not registered in resource `getPages()`
-- Route slug conflict
-- Missing route cache clear
 
 **Solution**:
 ```php
@@ -296,6 +271,18 @@ public static function getPages(): array
 ```
 ```bash
 php artisan route:clear
+```
+
+## Cache Clearing Commands
+
+```bash
+php artisan filament:cache-components
+php artisan cache:clear
+php artisan config:clear
+php artisan route:clear
+php artisan view:clear
+php artisan optimize:clear
+composer dump-autoload
 ```
 
 ## Debug Checklist

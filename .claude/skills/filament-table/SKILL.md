@@ -1,18 +1,20 @@
 ---
-name: tables
-description: Generate FilamentPHP v5 table configurations with columns, filters, actions, summaries, and grouping
+name: filament-table
+description: Create FilamentPHP v5 table configurations with columns, filters, actions, summaries, and grouping. Use when building tables, adding columns, configuring filters, or setting up table actions.
+allowed-tools: Bash, Glob, Grep, Read, Write, Edit
+argument-hint: "<TableDescription> with <columns>, <filters>, <actions>"
 ---
 
-# FilamentPHP v5 Tables Skill
+# Create Filament v5 Table Configuration
 
-## Overview
+## Process
 
-This skill generates table configurations for FilamentPHP v5 with columns, filters, actions, summaries, grouping, and advanced features.
-
-## Documentation Reference
-
-**CRITICAL:** Before generating tables, read:
-- `skills/docs/references/tables/`
+1. **Consult Documentation**: Read `${CLAUDE_SKILL_DIR}/../filament-docs/references/tables/`
+2. **Analyze Model**: Determine displayable fields and relationships
+3. **Configure Columns**: Set up column types with formatting
+4. **Add Filters**: Create filters for data filtering
+5. **Add Actions**: Configure row and bulk actions
+6. **Configure Layout**: Set pagination, sorting, and grouping
 
 ## Column Types Reference
 
@@ -331,31 +333,11 @@ use Filament\Tables\Grouping\Group;
 
 ## Responsive Table Layouts
 
-### Stacked on Mobile
+### Split Layout
 ```php
 use Filament\Tables\Columns\Layout\Split;
 use Filament\Tables\Columns\Layout\Stack;
 
-->columns([
-    Split::make([
-        ImageColumn::make('avatar')
-            ->circular()
-            ->grow(false),
-        TextColumn::make('name')
-            ->searchable()
-            ->sortable()
-            ->weight(FontWeight::Bold),
-        TextColumn::make('email')
-            ->searchable(),
-        TextColumn::make('status')
-            ->badge()
-            ->grow(false),
-    ]),
-])
-```
-
-### Stack Layout
-```php
 ->columns([
     Split::make([
         ImageColumn::make('avatar')
@@ -410,8 +392,6 @@ use Filament\Tables\Columns\Layout\Panel;
 ```php
 TextColumn::make('email')
     ->stackedOnMobile()
-
-// Equivalent to hiding on mobile and showing in split layout
 ```
 
 ## Empty State
@@ -426,4 +406,39 @@ TextColumn::make('email')
         ->url(route('...'))
         ->icon('heroicon-o-plus'),
 ])
+```
+
+## Complete Table Example
+
+```php
+public static function table(Table $table): Table
+{
+    return $table
+        ->columns([
+            ImageColumn::make('avatar')->circular(),
+            TextColumn::make('name')->searchable()->sortable(),
+            TextColumn::make('email')->searchable()->copyable(),
+            TextColumn::make('role')->badge(),
+            IconColumn::make('is_active')->boolean(),
+            TextColumn::make('created_at')->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true),
+        ])
+        ->filters([
+            SelectFilter::make('role')
+                ->options(['admin' => 'Admin', 'user' => 'User']),
+            TernaryFilter::make('is_active'),
+        ])
+        ->recordActions([
+            EditAction::make(),
+            DeleteAction::make(),
+        ])
+        ->toolbarActions([
+            BulkActionGroup::make([
+                DeleteBulkAction::make(),
+            ]),
+        ])
+        ->defaultSort('created_at', 'desc')
+        ->striped()
+        ->paginated([10, 25, 50, 100])
+        ->defaultPaginationPageOption(25);
+}
 ```

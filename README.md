@@ -2,6 +2,18 @@
 
 Expert FilamentPHP v5 assistant for Claude Code. Generates resources, forms, tables, actions, widgets, infolists, schemas, and Pest tests following official Filament v5 documentation patterns.
 
+## Installation
+
+Add this skill to your Claude Code project or personal skills:
+
+```bash
+# As a project skill (in your project root)
+git clone <this-repo> .claude/skills/filament-specialist
+
+# Or as a personal skill
+git clone <this-repo> ~/.claude/skills/filament-specialist
+```
+
 ## Requirements
 
 - PHP 8.2+
@@ -10,6 +22,67 @@ Expert FilamentPHP v5 assistant for Claude Code. Generates resources, forms, tab
 - Livewire v4.0+
 - Tailwind CSS v4.1+
 - Pest testing framework
+
+## Skills (Slash Commands)
+
+| Command | Description |
+|---------|-------------|
+| `/filament-resource` | Generate a complete CRUD resource |
+| `/filament-form` | Create form schemas with fields and validation |
+| `/filament-table` | Create table configurations with columns and filters |
+| `/filament-action` | Generate actions with modals and logic |
+| `/filament-widget` | Create dashboard widgets |
+| `/filament-infolist` | Generate read-only data displays |
+| `/filament-test` | Generate Pest tests for Filament components |
+| `/filament-notification` | Create flash, database, and broadcast notifications |
+| `/filament-dashboard` | Create dashboard pages with widgets |
+| `/filament-docs` | Search official FilamentPHP v5 documentation |
+| `/filament-diagnose` | Diagnose and fix FilamentPHP errors |
+
+## Background Knowledge
+
+The `filament-specialist` skill is automatically loaded as background knowledge when Claude detects you're working with FilamentPHP. It provides core principles, v5 patterns, and workflow guidance.
+
+## Usage Examples
+
+```
+/filament-resource Product --generate --soft-deletes
+/filament-form UserRegistration with name, email, password, avatar
+/filament-table OrdersTable with status filter and date sorting
+/filament-action SendInvoice with email modal
+/filament-widget RevenueChart as line chart
+/filament-test ProductResource --with-auth
+/filament-diagnose "Table columns not showing"
+```
+
+## Structure
+
+```
+.claude/skills/
+├── filament-resource/SKILL.md      # CRUD resource generation
+├── filament-form/SKILL.md          # Form schemas and fields
+├── filament-table/SKILL.md         # Table configurations
+├── filament-action/SKILL.md        # Actions, modals, import/export
+├── filament-widget/SKILL.md        # Dashboard widgets
+├── filament-infolist/SKILL.md      # Read-only data displays
+├── filament-test/SKILL.md          # Pest test generation
+├── filament-notification/SKILL.md  # Notification system
+├── filament-dashboard/SKILL.md     # Dashboard pages
+├── filament-docs/                  # Documentation search
+│   ├── SKILL.md
+│   ├── rebuildFilamentDocs.sh      # Populate references from GitHub
+│   └── references/                 # Local FilamentPHP v5 docs
+├── filament-diagnose/SKILL.md      # Error diagnosis
+└── filament-specialist/SKILL.md    # Background knowledge (auto-loaded)
+```
+
+## Documentation
+
+Run the `rebuildFilamentDocs.sh` script to populate the documentation references directory with the official FilamentPHP v5 documentation from GitHub:
+
+```bash
+bash .claude/skills/filament-docs/rebuildFilamentDocs.sh
+```
 
 ## Features
 
@@ -25,51 +98,18 @@ Expert FilamentPHP v5 assistant for Claude Code. Generates resources, forms, tab
 - **Testing**: Comprehensive Pest test generation for all components
 - **Diagnosis**: Error identification and troubleshooting
 
-## Commands
-
-| Command | Description |
-|---------|-------------|
-| `/filament:resource` | Generate a complete CRUD resource |
-| `/filament:form` | Create form schemas with fields and validation |
-| `/filament:table` | Create table configurations with columns and filters |
-| `/filament:action` | Generate actions with modals and logic |
-| `/filament:widget` | Create dashboard widgets |
-| `/filament:infolist` | Generate read-only data displays |
-| `/filament:test` | Generate Pest tests for Filament components |
-| `/filament:diagnose` | Diagnose and fix FilamentPHP errors |
-| `/filament:docs` | Search official FilamentPHP v5 documentation |
-| `/filament:dashboard` | Create dashboard pages with widgets |
-
-## Usage Examples
-
-```
-/filament:resource Product --generate --soft-deletes
-/filament:form UserRegistration with name, email, password, avatar
-/filament:table OrdersTable with status filter and date sorting
-/filament:action SendInvoice with email modal
-/filament:widget RevenueChart as line chart
-/filament:test ProductResource --with-auth
-/filament:diagnose "Table columns not showing"
-```
-
-## Documentation
-
-Run the `skills/docs/rebuildFilamentDocs.sh` script to populate the `skills/docs/references/` directory with the official FilamentPHP v5 documentation from GitHub.
-
 ## Filament v5 vs v4
 
 Filament v5 has **no new Filament-specific features** over v4. The major version bump is solely for
 **Livewire v4 compatibility**. Features ship to both v4 and v5 in parallel. The features documented
 in this skill are available in Filament v4.x (4.5+) and v5.x.
 
-### Key Dependency Changes (v4 → v5)
+### Key Dependency Changes (v4 -> v5)
 - **Livewire v4**: Required (was v3 in Filament v4)
 - **Tailwind CSS v4**: Required (was v3 in Filament v4)
 
 ### Notable Features (available in both v4.5+ and v5)
 - **Schemas package**: Foundational package for building UIs declaratively
-- **Schema-based components**: Forms and infolists share the schemas foundation
-- **Prime components**: Static content renderers (text, images, buttons)
 - **Import/Export actions**: Built-in import and export functionality
 - **Code editor field**: Code syntax editor form field
 - **Slider field**: Range slider input field
@@ -84,6 +124,4 @@ in this skill are available in Filament v4.x (4.5+) and v5.x.
 - **TestAction helper**: `TestAction::make()` for cleaner testing syntax
 - **Clusters**: Hierarchical navigation grouping
 - **Resource sub-navigation**: `getRecordSubNavigation()`
-- **Listing tabs with badges**: `getTabs()` with `modifyQueryUsing()`
 - **Dashboard FilterAction**: Modal-based filter alternative
-- **Section-level save**: `saveFormComponentOnly()` on edit pages

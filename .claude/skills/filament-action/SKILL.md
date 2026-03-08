@@ -1,18 +1,20 @@
 ---
-name: actions
-description: Generate FilamentPHP v5 actions with modals, CRUD operations, import/export, and business logic
+name: filament-action
+description: Generate FilamentPHP v5 actions with modals, forms, confirmations, CRUD operations, import/export, and business logic. Use when creating page actions, table row actions, bulk actions, or modal-based workflows.
+allowed-tools: Bash, Glob, Grep, Read, Write, Edit
+argument-hint: "<ActionName> [with modal] [with form] [with confirmation]"
 ---
 
-# FilamentPHP v5 Actions Skill
+# Generate Filament v5 Action
 
-## Overview
+## Process
 
-This skill generates actions for FilamentPHP v5 including page actions, table row actions, bulk actions, modal actions, CRUD actions, and the new import/export actions.
-
-## Documentation Reference
-
-**CRITICAL:** Before generating actions, read:
-- `skills/docs/references/actions/`
+1. **Consult Documentation**: Read `${CLAUDE_SKILL_DIR}/../filament-docs/references/actions/`
+2. **Determine Action Type**: Page action, table row action, bulk action, or header action
+3. **Configure Trigger**: Button style, icon, color, label
+4. **Add Modal**: Confirmation dialog, form data collection, or wizard
+5. **Implement Logic**: Action handler with proper utility injection
+6. **Add Authorization**: Visibility and policy-based access control
 
 ## Action Types
 
@@ -105,6 +107,10 @@ use Filament\Actions\DeleteAction;
 use Filament\Actions\ForceDeleteAction;
 use Filament\Actions\RestoreAction;
 use Filament\Actions\ReplicateAction;
+
+// Import/Export (NEW in v5)
+use Filament\Actions\ImportAction;
+use Filament\Actions\ExportAction;
 ```
 
 ## Import Action (NEW in v5)
@@ -156,11 +162,7 @@ class ProductImporter extends Importer
 
     public function resolveRecord(): ?Product
     {
-        // Update existing or create new
         return Product::firstOrNew(['sku' => $this->data['sku']]);
-
-        // Always create new
-        // return new Product();
     }
 
     public static function getCompletedNotificationBody(Import $import): string
@@ -201,10 +203,10 @@ protected function getHeaderActions(): array
 ```php
 ImportAction::make()
     ->importer(ProductImporter::class)
-    ->csvDelimiter(';')          // Custom CSV delimiter
-    ->chunkSize(500)             // Rows per chunk (default: 100)
-    ->maxRows(10000)             // Maximum rows allowed
-    ->job(CustomImportJob::class) // Custom job class
+    ->csvDelimiter(';')
+    ->chunkSize(500)
+    ->maxRows(10000)
+    ->job(CustomImportJob::class)
 ```
 
 ## Export Action (NEW in v5)
@@ -269,30 +271,12 @@ class ProductExporter extends Exporter
 use Filament\Actions\ExportAction;
 use App\Filament\Exports\ProductExporter;
 
-// As page header action
-protected function getHeaderActions(): array
-{
-    return [
-        ExportAction::make()
-            ->exporter(ProductExporter::class),
-    ];
-}
-
-// As table toolbar action
-->toolbarActions([
-    Tables\Actions\ExportAction::make()
-        ->exporter(ProductExporter::class),
-])
-```
-
-### Export Options
-```php
 ExportAction::make()
     ->exporter(ProductExporter::class)
     ->fileName(fn (Export $export): string => "products-{$export->getKey()}")
     ->fileDisk('s3')
     ->modifyQueryUsing(fn (Builder $query) => $query->where('is_active', true))
-    ->columnMapping(false) // Disable column selection UI
+    ->columnMapping(false)
 ```
 
 ## Modal Configuration
@@ -344,8 +328,8 @@ Action::make('preview')
 ```php
 Action::make('edit')
     ->schema([/* ... many fields ... */])
-    ->stickyModalHeader()  // Header stays visible when scrolling
-    ->stickyModalFooter()  // Submit button stays visible when scrolling
+    ->stickyModalHeader()
+    ->stickyModalFooter()
 ```
 
 ## Trigger Styles
@@ -386,8 +370,8 @@ Action::make('copy')
 ### Authorization
 ```php
 Action::make('edit')
-    ->authorize('update')               // Check policy ability
-    ->authorizationTooltip()            // Show tooltip when unauthorized
+    ->authorize('update')
+    ->authorizationTooltip()
     ->visible(fn () => auth()->user()->can('update', $this->record))
 
 // Custom unauthorized notification (v4.5+/v5)
@@ -422,10 +406,6 @@ ActionGroup::make([
 ])
 ->buttonGroup()
 
-// Dropdown placement
-ActionGroup::make([...])
-    ->dropdownPlacement('bottom-end') // top, bottom, left, right + -start/-end
-
 // Dividers between items
 ActionGroup::make([
     Action::make('edit'),
@@ -437,7 +417,6 @@ ActionGroup::make([
 
 ### Nested Action Modals (v4.5+/v5)
 ```php
-// Child modal overlays parent instead of closing it
 Action::make('edit')
     ->schema([
         TextInput::make('name'),
@@ -451,50 +430,22 @@ Action::make('edit')
                         $category = Category::create($data);
                         $set('category_id', $category->id);
                     })
-                    ->overlayParentActions() // Keep parent modal visible behind
+                    ->overlayParentActions()
             ),
     ])
 
 // Cancel parent actions when child action runs
 Action::make('review')
     ->schema([...])
-    ->action(function (array $data): void {
-        // ...
-    })
+    ->action(function (array $data): void { /* ... */ })
     ->registerModalActions([
         Action::make('reject')
             ->requiresConfirmation()
             ->action(function (Model $record): void {
                 $record->reject();
             })
-            ->cancelParentActions() // Close parent modal chain
+            ->cancelParentActions()
     ])
-
-// Access parent action data from nested actions via $mountedActions
-Action::make('parent')
-    ->schema([TextInput::make('name')])
-    ->registerModalActions([
-        Action::make('child')
-            ->action(function (array $mountedActions): void {
-                $parentData = $mountedActions[0]->getFormData();
-            }),
-    ])
-```
-
-### After Action Side Effects
-```php
-Action::make('approve')
-    ->action(function (Model $record): void {
-        $record->approve();
-
-        // Notification
-        Notification::make()
-            ->title('Approved successfully')
-            ->success()
-            ->send();
-    })
-    ->successRedirectUrl(fn () => route('orders.index'))
-    ->after(fn () => $this->refreshFormData(['status']))
 ```
 
 ## Utility Injection

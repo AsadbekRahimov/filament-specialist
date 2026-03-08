@@ -1,6 +1,7 @@
 ---
-description: Search and reference official FilamentPHP v5 documentation
-allowed-tools: ["Bash", "Glob", "Grep", "Read"]
+name: filament-docs
+description: Search and reference official FilamentPHP v5 documentation from local copy. Use when looking up Filament API details, checking v5 patterns, or finding specific documentation.
+allowed-tools: Bash, Glob, Grep, Read
 argument-hint: "<topic or keyword to search>"
 ---
 
@@ -9,7 +10,7 @@ argument-hint: "<topic or keyword to search>"
 ## Process
 
 1. **Identify Topic**: Map the user's query to documentation sections
-2. **Search References**: Look in the local documentation copy
+2. **Search References**: Look in the local documentation copy at `${CLAUDE_SKILL_DIR}/references/`
 3. **Provide Answer**: Return relevant documentation with code examples
 
 ## Documentation Directory Map
@@ -55,7 +56,7 @@ argument-hint: "<topic or keyword to search>"
 | Panel config | `references/general/05-panel-configuration.md` |
 | Custom pages | `references/general/06-navigation/` |
 | Widgets | `references/widgets/` |
-| Upgrade v4→v5 | `references/general/14-upgrade-guide.md` |
+| Upgrade v4->v5 | `references/general/14-upgrade-guide.md` |
 
 ## Search Workflow
 
