@@ -1,18 +1,19 @@
 ---
-name: widgets
-description: Generate FilamentPHP v5 dashboard widgets including stats overview, charts, table widgets, and custom widgets
+name: filament-widget
+description: Create FilamentPHP v5 dashboard widgets including stats overview, charts, table widgets, and custom widgets. Use when building dashboard widgets, stats cards, or chart visualizations.
+allowed-tools: Bash, Glob, Grep, Read, Write, Edit
+argument-hint: "<WidgetName> as <stats|chart|table|custom>"
 ---
 
-# FilamentPHP v5 Widgets Skill
+# Create Filament v5 Widget
 
-## Overview
+## Process
 
-This skill generates widgets for FilamentPHP v5 dashboards including stats overview, chart, table, and custom widgets.
-
-## Documentation Reference
-
-**CRITICAL:** Before generating widgets, read:
-- `skills/docs/references/widgets/`
+1. **Consult Documentation**: Read `${CLAUDE_SKILL_DIR}/../filament-docs/references/widgets/`
+2. **Determine Widget Type**: Stats overview, chart, table, or custom
+3. **Generate Base**: Use `php artisan make:filament-widget`
+4. **Implement Logic**: Configure data sources and display
+5. **Register Widget**: Add to panel provider or resource page
 
 ## Artisan Commands
 

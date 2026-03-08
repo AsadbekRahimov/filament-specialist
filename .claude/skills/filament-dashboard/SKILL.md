@@ -1,6 +1,7 @@
 ---
-description: Create FilamentPHP v5 dashboard pages with widgets, tabs, and custom content
-allowed-tools: ["Bash", "Glob", "Grep", "Read", "Write", "Edit"]
+name: filament-dashboard
+description: Create FilamentPHP v5 dashboard pages with widgets, tabs, filters, and custom content. Use when building admin dashboards, analytics pages, or widget-based layouts.
+allowed-tools: Bash, Glob, Grep, Read, Write, Edit
 argument-hint: "<DashboardName> with <widget1>, <widget2>, ..."
 ---
 
@@ -8,15 +9,13 @@ argument-hint: "<DashboardName> with <widget1>, <widget2>, ..."
 
 ## Process
 
-1. **Consult Documentation**: Read widget and dashboard docs
+1. **Consult Documentation**: Read `${CLAUDE_SKILL_DIR}/../filament-docs/references/widgets/`
 2. **Plan Layout**: Determine widgets and their arrangement
 3. **Create Widgets**: Generate stats, chart, and table widgets
 4. **Configure Page**: Set up dashboard page with widget registration
 5. **Register**: Add to panel provider
 
-## Dashboard Page
-
-### Default Dashboard Customization
+## Default Dashboard
 
 ```php
 <?php
@@ -31,8 +30,6 @@ use Filament\Pages\Dashboard as BaseDashboard;
 class Dashboard extends BaseDashboard
 {
     protected static ?string $navigationIcon = 'heroicon-o-home';
-
-    protected static ?string $title = 'Dashboard';
 
     public function getWidgets(): array
     {
@@ -50,7 +47,7 @@ class Dashboard extends BaseDashboard
 }
 ```
 
-### Multi-Tab Dashboard
+## Multi-Tab Dashboard
 
 ```php
 <?php
@@ -61,13 +58,10 @@ namespace App\Filament\Pages;
 
 use App\Filament\Widgets;
 use Filament\Pages\Dashboard as BaseDashboard;
-use Filament\Pages\Dashboard\Concerns\HasFiltersForm;
 use Filament\Schemas\Components\Tabs\Tab;
 
 class Dashboard extends BaseDashboard
 {
-    use HasFiltersForm;
-
     public function getTabs(): array
     {
         return [
@@ -100,7 +94,7 @@ class Dashboard extends BaseDashboard
 }
 ```
 
-### Dashboard with Filters
+## Dashboard with Filters
 
 ```php
 <?php
@@ -122,12 +116,15 @@ class Dashboard extends BaseDashboard
     public function filtersForm(Schema $schema): Schema
     {
         return $schema->components([
-            Select::make('status')
+            Select::make('period')
                 ->options([
-                    'all' => 'All',
-                    'active' => 'Active',
-                    'inactive' => 'Inactive',
-                ]),
+                    'today' => 'Today',
+                    'week' => 'This Week',
+                    'month' => 'This Month',
+                    'quarter' => 'This Quarter',
+                    'year' => 'This Year',
+                ])
+                ->default('month'),
             DatePicker::make('startDate'),
             DatePicker::make('endDate'),
         ]);
@@ -135,7 +132,47 @@ class Dashboard extends BaseDashboard
 }
 ```
 
-### Widget Using Dashboard Filters
+## Dashboard with Filter Action Modal (NEW in v5)
+
+```php
+<?php
+
+declare(strict_types=1);
+
+namespace App\Filament\Pages;
+
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Select;
+use Filament\Pages\Dashboard as BaseDashboard;
+use Filament\Pages\Dashboard\Actions\FilterAction;
+use Filament\Pages\Dashboard\Concerns\HasFiltersAction;
+
+class Dashboard extends BaseDashboard
+{
+    use HasFiltersAction;
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            FilterAction::make()->schema([
+                Select::make('period')
+                    ->options([
+                        'today' => 'Today',
+                        'week' => 'This Week',
+                        'month' => 'This Month',
+                    ])
+                    ->default('month'),
+                DatePicker::make('startDate'),
+                DatePicker::make('endDate'),
+            ]),
+        ];
+    }
+}
+```
+
+Benefits over `HasFiltersForm`: filters don't take up page space, validation runs before applying, widgets don't reload until user clicks "Apply".
+
+## Widget Using Dashboard Filters
 
 ```php
 <?php
@@ -162,10 +199,59 @@ class FilteredStats extends StatsOverviewWidget
             ->when($endDate, fn ($q) => $q->where('created_at', '<=', $endDate));
 
         return [
-            Stat::make('Total Orders', $query->count()),
+            Stat::make('Orders', $query->count()),
             Stat::make('Revenue', '$' . number_format($query->sum('total') / 100, 2)),
         ];
     }
+}
+```
+
+## Widget Accessing Page Table Data (NEW in v5)
+
+```php
+// On the List page
+use Filament\Pages\Concerns\ExposesTableToWidgets;
+
+class ListProducts extends ListRecords
+{
+    use ExposesTableToWidgets;
+}
+
+// On the widget
+use Filament\Widgets\Concerns\InteractsWithPageTable;
+
+class ProductStats extends StatsOverviewWidget
+{
+    use InteractsWithPageTable;
+
+    protected function getTablePage(): string
+    {
+        return ListProducts::class;
+    }
+
+    protected function getStats(): array
+    {
+        return [
+            Stat::make('Total', $this->getPageTableQuery()->count()),
+            Stat::make('Revenue', '$' . number_format(
+                $this->getPageTableQuery()->sum('price') / 100, 2
+            )),
+        ];
+    }
+}
+```
+
+## Auto-Opening Action Modal on Page Load
+
+```php
+public $defaultAction = 'onboarding';
+
+public function onboardingAction(): Action
+{
+    return Action::make('onboarding')
+        ->modalHeading('Welcome')
+        ->schema([...])
+        ->visible(fn (): bool => ! auth()->user()->isOnBoarded());
 }
 ```
 
@@ -183,9 +269,7 @@ use Filament\Pages\Page;
 class Settings extends Page
 {
     protected static ?string $navigationIcon = 'heroicon-o-cog-6-tooth';
-
     protected static ?string $navigationGroup = 'Settings';
-
     protected static string $view = 'filament.pages.settings';
 }
 ```
@@ -193,15 +277,11 @@ class Settings extends Page
 ## Registration in Panel Provider
 
 ```php
-use App\Filament\Pages\Dashboard;
-use App\Filament\Widgets;
-
 ->pages([
     Dashboard::class,
 ])
 ->widgets([
     Widgets\StatsOverview::class,
     Widgets\RevenueChart::class,
-    Widgets\LatestOrders::class,
 ])
 ```

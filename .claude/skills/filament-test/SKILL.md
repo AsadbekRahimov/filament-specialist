@@ -1,18 +1,18 @@
 ---
-name: testing
-description: Generate Pest tests for FilamentPHP v5 resources, schemas, tables, actions, and authorization
+name: filament-test
+description: Generate comprehensive Pest tests for FilamentPHP v5 resources, schemas, tables, actions, and authorization. Use when writing tests for Filament components, CRUD operations, or action workflows.
+allowed-tools: Bash, Glob, Grep, Read, Write, Edit
+argument-hint: "<ResourceName> [--with-auth] [--type=<resource|form|table|action>]"
 ---
 
-# FilamentPHP v5 Testing Skill
+# Generate Filament v5 Pest Tests
 
-## Overview
+## Process
 
-This skill generates comprehensive Pest tests for FilamentPHP v5 components following official testing documentation patterns. Uses the new v5 `TestAction` helper and `assertSchemaStateSet()` assertions.
-
-## Documentation Reference
-
-**CRITICAL:** Before generating tests, read:
-- `skills/docs/references/general/10-testing/`
+1. **Consult Documentation**: Read `${CLAUDE_SKILL_DIR}/../filament-docs/references/general/10-testing/`
+2. **Analyze Resource**: Examine the resource class, form, and table configuration
+3. **Generate Tests**: Create comprehensive test file
+4. **Include Coverage**: CRUD operations, validation, table features, actions, and authorization
 
 ## Test Setup
 
@@ -302,7 +302,6 @@ use Filament\Testing\TestAction;
 ```php
 use Filament\Notifications\Notification;
 
-// Assert notification sent
 Notification::assertSentTo($user, function (Notification $notification) {
     return $notification->getTitle() === 'Order shipped';
 });
@@ -366,16 +365,15 @@ it('prevents unauthorized creation', function () {
 
     livewire(CreatePost::class)->assertForbidden();
 });
-```
 
-## Multi-Panel & Tenant Testing
+it('prevents unauthorized editing', function () {
+    $user = User::factory()->create(['is_admin' => false]);
+    $post = Post::factory()->create();
+    $this->actingAs($user);
 
-```php
-use Filament\Facades\Filament;
-
-Filament::setCurrentPanel('app');
-Filament::setTenant($team);
-Filament::bootCurrentPanel();
+    livewire(EditPost::class, ['record' => $post->getRouteKey()])
+        ->assertForbidden();
+});
 ```
 
 ## Relation Manager Tests
@@ -389,6 +387,31 @@ livewire(CommentsRelationManager::class, [
 ])
     ->assertOk()
     ->assertCanSeeTableRecords($post->comments);
+```
+
+## Multi-Panel & Tenant Testing
+
+```php
+use Filament\Facades\Filament;
+
+Filament::setCurrentPanel('app');
+Filament::setTenant($team);
+Filament::bootCurrentPanel();
+```
+
+## Widget Tests
+
+```php
+it('can render stats widget', function () {
+    livewire(StatsOverview::class)->assertOk();
+});
+
+it('can render table widget', function () {
+    $posts = Post::factory()->count(5)->create();
+    livewire(LatestPosts::class)
+        ->assertOk()
+        ->assertCanSeeTableRecords($posts);
+});
 ```
 
 ## Output

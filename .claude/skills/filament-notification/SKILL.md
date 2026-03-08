@@ -1,18 +1,19 @@
 ---
-name: notifications
-description: Generate FilamentPHP v5 notifications including flash messages, database notifications, and broadcast notifications
+name: filament-notification
+description: Generate FilamentPHP v5 notifications including flash messages, database notifications, and broadcast notifications with actions and custom styling. Use when implementing user notifications, alerts, or real-time updates.
+allowed-tools: Bash, Glob, Grep, Read, Write, Edit
+argument-hint: "<NotificationType> [flash|database|broadcast]"
 ---
 
-# FilamentPHP v5 Notifications Skill
+# Generate Filament v5 Notifications
 
-## Overview
+## Process
 
-This skill generates notifications for FilamentPHP v5 including flash (session) notifications, database notifications, and broadcast notifications with actions, custom icons, and colors.
-
-## Documentation Reference
-
-**CRITICAL:** Before generating notifications, read:
-- `skills/docs/references/notifications/`
+1. **Consult Documentation**: Read `${CLAUDE_SKILL_DIR}/../filament-docs/references/notifications/`
+2. **Determine Type**: Flash (session), database, or broadcast notification
+3. **Configure Content**: Title, body, icon, color
+4. **Add Actions**: Buttons, links, mark-as-read
+5. **Send**: To current user or to specific recipients
 
 ## Flash Notifications (Session)
 
@@ -119,9 +120,8 @@ Notification::make()
 
 ### Database Notification Polling
 ```php
-// In panel provider
 $panel->databaseNotifications()
-    ->databaseNotificationsPolling('30s') // Poll every 30 seconds
+    ->databaseNotificationsPolling('30s')
 ```
 
 ### Unread Notification Count Badge
@@ -138,7 +138,6 @@ composer require laravel/echo pusher/pusher-php-server
 ```
 
 ```php
-// In panel provider
 $panel->broadcasting()
 ```
 
@@ -169,44 +168,19 @@ Notification::make()
 ```php
 use Filament\Notifications\Actions\Action;
 
-// Button action
-Action::make('view')
-    ->button()
-    ->url('/orders/123')
-    ->openUrlInNewTab()
-
-// Link action
-Action::make('details')
-    ->url('/orders/123')
-
-// Close action
-Action::make('dismiss')
-    ->close()
-
-// Mark as read
-Action::make('mark_read')
-    ->markAsRead()
-
-// Mark as unread
-Action::make('mark_unread')
-    ->markAsUnread()
-
-// Action colors
-Action::make('approve')
-    ->button()
-    ->color('success')
-
-// Dispatch events
-Action::make('refresh')
-    ->dispatch('refresh-data')
-
-Action::make('load')
-    ->dispatchTo('chart-widget', 'load-data', ['period' => 'month'])
+Action::make('view')->button()->url('/orders/123')->openUrlInNewTab()
+Action::make('details')->url('/orders/123')
+Action::make('dismiss')->close()
+Action::make('mark_read')->markAsRead()
+Action::make('mark_unread')->markAsUnread()
+Action::make('approve')->button()->color('success')
+Action::make('refresh')->dispatch('refresh-data')
+Action::make('load')->dispatchTo('chart-widget', 'load-data', ['period' => 'month'])
 ```
 
 ## JavaScript Notification API (v4.5+/v5)
 
-Send notifications from client-side JavaScript (Alpine.js, Blade scripts, `actionJs()`):
+Send notifications from client-side JavaScript:
 
 ```js
 // Basic notification
@@ -256,54 +230,16 @@ Action::make('copy_url')
 ## Notification Positioning
 
 ```php
-// In panel provider - set default position
 use Filament\Notifications\Livewire\Notifications;
 use Filament\Notifications\NotificationsPosition;
 
 Notifications::position(NotificationsPosition::TopCenter);
 // Options: TopLeft, TopCenter, TopRight, BottomLeft, BottomCenter, BottomRight
 
-// Database notifications as sidebar
 use Filament\Notifications\Livewire\DatabaseNotifications;
 use Filament\Notifications\DatabaseNotificationsPosition;
 
 DatabaseNotifications::position(DatabaseNotificationsPosition::Sidebar);
-```
-
-## Custom Notification Views
-
-```php
-Notification::make()
-    ->title('Custom notification')
-    ->view('filament.notifications.custom-notification')
-    ->viewData(['order' => $order])
-    ->send();
-```
-
-## Notification Within Actions
-
-Common pattern - send notification after action completes:
-
-```php
-use Filament\Actions\Action;
-use Filament\Notifications\Notification;
-
-Action::make('approve')
-    ->requiresConfirmation()
-    ->action(function (Model $record): void {
-        $record->update(['status' => 'approved']);
-
-        Notification::make()
-            ->title('Order approved')
-            ->success()
-            ->send();
-
-        // Also notify the customer
-        Notification::make()
-            ->title('Your order has been approved')
-            ->body("Order #{$record->number} is now being processed.")
-            ->sendToDatabase($record->customer);
-    })
 ```
 
 ## Testing Notifications

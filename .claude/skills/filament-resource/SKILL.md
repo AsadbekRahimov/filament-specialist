@@ -1,35 +1,228 @@
 ---
-name: resource
-description: Generate complete FilamentPHP v5 CRUD resources following official documentation patterns
+name: filament-resource
+description: Generate complete FilamentPHP v5 CRUD resources with form, table, pages, relation managers, and tests. Use when creating or modifying Filament resources, scaffolding CRUD interfaces, or setting up admin panel resources.
+allowed-tools: Bash, Glob, Grep, Read, Write, Edit
+argument-hint: "<ModelName> [--generate] [--simple] [--soft-deletes] [--view]"
 ---
 
-# FilamentPHP v5 Resource Generation Skill
+# Generate Filament v5 Resource
 
-## Overview
+## Process
 
-This skill generates complete CRUD resources for FilamentPHP v5 including the resource class, form schema, table configuration, pages, relation managers, and tests.
+1. **Consult Documentation**: Read `${CLAUDE_SKILL_DIR}/../filament-docs/references/general/03-resources/`
+2. **Analyze Model**: Examine the Eloquent model for fields, relationships, and casts
+3. **Generate Base**: Use `php artisan make:filament-resource`
+4. **Customize Form**: Build form schema with appropriate fields and validation
+5. **Customize Table**: Configure columns, filters, and actions
+6. **Add Relations**: Create relation managers for HasMany/BelongsToMany
+7. **Add Authorization**: Implement model policies
+8. **Generate Tests**: Create Pest tests for all CRUD operations
 
-## Documentation Reference
+## Artisan Command
 
-**CRITICAL:** Before generating resources, read:
-- `skills/docs/references/general/03-resources/`
-
-## Workflow
-
-### Step 1: Gather Requirements
-- Model name and namespace
-- Database fields and types
-- Relationships (HasMany, BelongsTo, BelongsToMany, etc.)
-- Authorization requirements
-- Soft deletes needed?
-- View page needed?
-
-### Step 2: Generate Base Resource
 ```bash
-php artisan make:filament-resource ModelName [--generate] [--simple] [--soft-deletes] [--view]
+# Basic resource
+php artisan make:filament-resource Customer
+
+# With auto-generated form and table from DB schema
+php artisan make:filament-resource Customer --generate
+
+# Simple resource (single page with modals)
+php artisan make:filament-resource Customer --simple
+
+# With soft deletes support
+php artisan make:filament-resource Customer --soft-deletes
+
+# With view page
+php artisan make:filament-resource Customer --view
+
+# Generate model, migration, and factory together
+php artisan make:filament-resource Customer --model --migration --factory
 ```
 
-### Step 3: Customize Form Schema
+## Resource File Structure (v5)
+
+In Filament v5, `make:filament-resource` generates a more organized file structure with
+separate Schema and Table classes:
+
+```
+app/Filament/Resources/
+└── Customers/
+    ├── CustomerResource.php
+    ├── Pages/
+    │   ├── CreateCustomer.php
+    │   ├── EditCustomer.php
+    │   └── ListCustomers.php
+    ├── Schemas/
+    │   └── CustomerForm.php        # Separate form schema class (NEW in v5)
+    └── Tables/
+        └── CustomersTable.php      # Separate table config class (NEW in v5)
+```
+
+### Resource Class
+
+```php
+<?php
+
+declare(strict_types=1);
+
+namespace App\Filament\Resources;
+
+use App\Filament\Resources\Customers\Pages;
+use App\Filament\Resources\Customers\RelationManagers;
+use App\Filament\Resources\Customers\Schemas\CustomerForm;
+use App\Filament\Resources\Customers\Tables\CustomersTable;
+use App\Models\Customer;
+use Filament\Resources\Resource;
+use Filament\Schemas\Schema;
+use Filament\Tables\Table;
+
+class CustomerResource extends Resource
+{
+    protected static ?string $model = Customer::class;
+
+    protected static ?string $navigationIcon = 'heroicon-o-users';
+
+    protected static ?string $recordTitleAttribute = 'name';
+
+    public static function form(Schema $schema): Schema
+    {
+        return CustomerForm::configure($schema);
+    }
+
+    public static function table(Table $table): Table
+    {
+        return CustomersTable::configure($table);
+    }
+
+    public static function getRelations(): array
+    {
+        return [
+            // RelationManagers\OrdersRelationManager::class,
+        ];
+    }
+
+    public static function getPages(): array
+    {
+        return [
+            'index' => Pages\ListCustomers::route('/'),
+            'create' => Pages\CreateCustomer::route('/create'),
+            'edit' => Pages\EditCustomer::route('/{record}/edit'),
+        ];
+    }
+}
+```
+
+### Separate Form Schema Class (NEW in v5)
+
+```php
+<?php
+
+declare(strict_types=1);
+
+namespace App\Filament\Resources\Customers\Schemas;
+
+use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Schema;
+
+class CustomerForm
+{
+    public static function configure(Schema $schema): Schema
+    {
+        return $schema->components([
+            TextInput::make('name')->required(),
+            TextInput::make('email')->email()->required(),
+        ]);
+    }
+}
+```
+
+### Separate Table Config Class (NEW in v5)
+
+```php
+<?php
+
+declare(strict_types=1);
+
+namespace App\Filament\Resources\Customers\Tables;
+
+use Filament\Tables\Actions\BulkActionGroup;
+use Filament\Tables\Actions\DeleteBulkAction;
+use Filament\Tables\Actions\EditAction;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Table;
+
+class CustomersTable
+{
+    public static function configure(Table $table): Table
+    {
+        return $table
+            ->columns([
+                TextColumn::make('name'),
+                TextColumn::make('email'),
+            ])
+            ->filters([
+                // Filters
+            ])
+            ->recordActions([
+                EditAction::make(),
+            ])
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
+                ]),
+            ]);
+    }
+}
+```
+
+### Inline Form/Table (Alternative)
+
+```php
+public static function form(Schema $schema): Schema
+{
+    return $schema->components([
+        TextInput::make('name')->required(),
+        TextInput::make('email')->email()->required(),
+    ]);
+}
+
+public static function table(Table $table): Table
+{
+    return $table
+        ->columns([
+            TextColumn::make('name'),
+            TextColumn::make('email'),
+        ])
+        ->recordActions([
+            EditAction::make(),
+        ])
+        ->toolbarActions([
+            BulkActionGroup::make([
+                DeleteBulkAction::make(),
+            ]),
+        ]);
+}
+```
+
+### Hiding Fields Based on Operation (v5)
+
+```php
+use Filament\Support\Enums\Operation;
+
+TextInput::make('password')
+    ->password()
+    ->required()
+    ->hiddenOn(Operation::Edit)
+
+// Or the inverse:
+TextInput::make('password')
+    ->password()
+    ->required()
+    ->visibleOn(Operation::Create)
+```
+
+## Form Schema: Field Type Mapping
 
 Map database columns to appropriate Filament field types:
 
@@ -49,9 +242,7 @@ Map database columns to appropriate Filament field types:
 
 **CRITICAL**: All form fields MUST be wrapped in layout components (Section, Grid, Tabs). Never place fields at the root level.
 
-### Step 4: Customize Table
-
-Map fields to column types:
+## Table: Column Type Mapping
 
 | Display Need | Column Type |
 |-------------|-------------|
@@ -62,17 +253,13 @@ Map fields to column types:
 | Inline edit | `TextInputColumn::make()` or `SelectColumn::make()` |
 | Colors | `ColorColumn::make()` |
 
-### Step 5: Add Relation Managers
+## Relation Managers
+
 ```bash
 php artisan make:filament-relation-manager ResourceName relationName titleAttribute
 ```
 
-### Step 6: Configure Pages
-
-Standard pages: List, Create, Edit
-Optional pages: View, ManageRelatedRecords
-
-### Step 7: Add Authorization
+## Authorization
 
 Create a policy and register it. Filament respects standard Laravel policy methods:
 - `viewAny()`, `view()`, `create()`, `update()`, `delete()`
@@ -142,13 +329,6 @@ protected static ?string $pluralModelLabel = 'products';
 
 // Record title (for global search)
 protected static ?string $recordTitleAttribute = 'name';
-
-// Global search
-protected static ?string $recordTitleAttribute = 'name';
-public static function getGloballySearchableAttributes(): array
-{
-    return ['name', 'sku', 'description'];
-}
 
 // Query customization
 public static function getEloquentQuery(): Builder
@@ -265,15 +445,6 @@ public static function getEloquentQuery(): Builder
 }
 ```
 
-### Tenant-Aware Resource Registration
-```php
-// Panel provider
-$panel
-    ->tenant(Team::class)
-    ->tenantRegistration(RegisterTeam::class)
-    ->tenantProfile(EditTeamProfile::class)
-```
-
 ### Automatically Set Tenant on Create
 ```php
 // In CreateRecord page
@@ -300,21 +471,16 @@ For models with only one record (e.g., settings):
 php artisan make:filament-resource Settings --singular
 ```
 
-Generates a single manage page instead of list/create/edit pages.
-
 ## Global Search Configuration
 
 ```php
-// Enable global search on resource
 protected static ?string $recordTitleAttribute = 'name';
 
-// Add extra searchable attributes
 public static function getGloballySearchableAttributes(): array
 {
     return ['name', 'sku', 'description', 'category.name'];
 }
 
-// Customize search result details
 public static function getGlobalSearchResultDetails(Model $record): array
 {
     return [
@@ -323,22 +489,18 @@ public static function getGlobalSearchResultDetails(Model $record): array
     ];
 }
 
-// Customize search result title
 public static function getGlobalSearchResultTitle(Model $record): string
 {
     return "{$record->name} ({$record->sku})";
 }
 
-// Customize search result URL
 public static function getGlobalSearchResultUrl(Model $record): string
 {
     return static::getUrl('edit', ['record' => $record]);
 }
 
-// Limit results
 protected static int $globalSearchResultsLimit = 10;
 
-// Eager load relationships for search results
 public static function getGlobalSearchEloquentQuery(): Builder
 {
     return parent::getGlobalSearchEloquentQuery()->with(['category']);
@@ -348,7 +510,7 @@ public static function getGlobalSearchEloquentQuery(): Builder
 ## Output
 
 Generated files:
-1. Resource class with form and table
-2. List, Create, Edit page classes
-3. Relation managers (if relationships exist)
-4. Pest test file
+1. `app/Filament/Resources/{Model}Resource.php` - Resource class
+2. `app/Filament/Resources/{Model}Resource/Pages/` - List, Create, Edit pages
+3. `app/Filament/Resources/{Model}Resource/RelationManagers/` - Relation managers (if applicable)
+4. `tests/Feature/Filament/{Model}ResourceTest.php` - Pest tests
