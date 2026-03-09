@@ -4,14 +4,48 @@ Expert FilamentPHP v5 assistant for Claude Code. Generates resources, forms, tab
 
 ## Installation
 
-Add this skill to your Claude Code project or personal skills:
+### Option 1: Install script (recommended)
+
+Clone the repo anywhere and run the install script. It creates symlinks in `~/.claude/skills/`:
 
 ```bash
-# As a project skill (in your project root)
-git clone <this-repo> .claude/skills/filament-specialist
+git clone https://github.com/AsadbekRahimov/filament-specialist.git ~/filament-specialist
+cd ~/filament-specialist
+bash install.sh
+```
 
-# Or as a personal skill
-git clone <this-repo> ~/.claude/skills/filament-specialist
+### Option 2: Manual symlinks
+
+```bash
+git clone https://github.com/AsadbekRahimov/filament-specialist.git ~/filament-specialist
+
+# Symlink each skill folder into Claude Code's skills directory
+for dir in ~/filament-specialist/filament-*/; do
+  ln -s "$dir" ~/.claude/skills/$(basename "$dir")
+done
+```
+
+### Option 3: Project-level (per-project)
+
+```bash
+# From your project root
+git clone https://github.com/AsadbekRahimov/filament-specialist.git /tmp/filament-specialist
+cp -r /tmp/filament-specialist/filament-*/ .claude/skills/
+```
+
+### Uninstall
+
+```bash
+cd ~/filament-specialist
+bash uninstall.sh
+```
+
+### Populate Documentation (optional)
+
+Fetch the official FilamentPHP v5 docs from GitHub for offline reference:
+
+```bash
+bash ~/filament-specialist/filament-docs/rebuildFilamentDocs.sh
 ```
 
 ## Requirements
@@ -24,6 +58,8 @@ git clone <this-repo> ~/.claude/skills/filament-specialist
 - Pest testing framework
 
 ## Skills (Slash Commands)
+
+After installation, these slash commands are available in Claude Code:
 
 | Command | Description |
 |---------|-------------|
@@ -58,31 +94,40 @@ The `filament-specialist` skill is automatically loaded as background knowledge 
 ## Structure
 
 ```
-.claude/skills/
-├── filament-resource/SKILL.md      # CRUD resource generation
-├── filament-form/SKILL.md          # Form schemas and fields
-├── filament-table/SKILL.md         # Table configurations
-├── filament-action/SKILL.md        # Actions, modals, import/export
-├── filament-widget/SKILL.md        # Dashboard widgets
-├── filament-infolist/SKILL.md      # Read-only data displays
-├── filament-test/SKILL.md          # Pest test generation
-├── filament-notification/SKILL.md  # Notification system
-├── filament-dashboard/SKILL.md     # Dashboard pages
-├── filament-docs/                  # Documentation search
+filament-specialist/                  # This repo
+├── filament-resource/SKILL.md        # CRUD resource generation
+├── filament-form/SKILL.md            # Form schemas and fields
+├── filament-table/SKILL.md           # Table configurations
+├── filament-action/SKILL.md          # Actions, modals, import/export
+├── filament-widget/SKILL.md          # Dashboard widgets
+├── filament-infolist/SKILL.md        # Read-only data displays
+├── filament-test/SKILL.md            # Pest test generation
+├── filament-notification/SKILL.md    # Notification system
+├── filament-dashboard/SKILL.md       # Dashboard pages
+├── filament-docs/                    # Documentation search
 │   ├── SKILL.md
-│   ├── rebuildFilamentDocs.sh      # Populate references from GitHub
-│   └── references/                 # Local FilamentPHP v5 docs
-├── filament-diagnose/SKILL.md      # Error diagnosis
-└── filament-specialist/SKILL.md    # Background knowledge (auto-loaded)
+│   ├── rebuildFilamentDocs.sh        # Populate references from GitHub
+│   └── references/                   # Local FilamentPHP v5 docs
+├── filament-diagnose/SKILL.md        # Error diagnosis
+├── filament-specialist/SKILL.md      # Background knowledge (auto-loaded)
+├── install.sh                        # Install symlinks to ~/.claude/skills/
+├── uninstall.sh                      # Remove symlinks
+└── README.md
 ```
 
-## Documentation
+Each `filament-*/` folder is a standalone Claude Code skill. The `install.sh` script symlinks them all into `~/.claude/skills/` so Claude Code discovers them.
 
-Run the `rebuildFilamentDocs.sh` script to populate the documentation references directory with the official FilamentPHP v5 documentation from GitHub:
+## How It Works
 
-```bash
-bash .claude/skills/filament-docs/rebuildFilamentDocs.sh
-```
+Claude Code discovers skills by looking for `SKILL.md` files in:
+- `~/.claude/skills/*/SKILL.md` (global/personal skills)
+- `.claude/skills/*/SKILL.md` (project-level skills)
+
+Each skill folder in this repo (`filament-resource/`, `filament-form/`, etc.) contains a `SKILL.md` with:
+- **YAML frontmatter**: `name`, `description`, `allowed-tools`, `argument-hint`
+- **Skill content**: Process steps, code examples, API references
+
+The install script symlinks each folder so Claude Code can find them.
 
 ## Features
 
