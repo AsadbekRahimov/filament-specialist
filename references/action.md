@@ -1,15 +1,8 @@
----
-name: filament-action
-description: Generate FilamentPHP v5 actions with modals, forms, confirmations, CRUD operations, import/export, and business logic. Use when creating page actions, table row actions, bulk actions, or modal-based workflows.
-allowed-tools: Bash, Glob, Grep, Read, Write, Edit
-argument-hint: "<ActionName> [with modal] [with form] [with confirmation]"
----
-
 # Generate Filament v5 Action
 
 ## Process
 
-1. **Consult Documentation**: Read `${CLAUDE_SKILL_DIR}/../filament-docs/references/actions/`
+1. **Consult Documentation**: Read `${CLAUDE_SKILL_DIR}/docs/references/actions/`
 2. **Determine Action Type**: Page action, table row action, bulk action, or header action
 3. **Configure Trigger**: Button style, icon, color, label
 4. **Add Modal**: Confirmation dialog, form data collection, or wizard

@@ -1,15 +1,8 @@
----
-name: filament-notification
-description: Generate FilamentPHP v5 notifications including flash messages, database notifications, and broadcast notifications with actions and custom styling. Use when implementing user notifications, alerts, or real-time updates.
-allowed-tools: Bash, Glob, Grep, Read, Write, Edit
-argument-hint: "<NotificationType> [flash|database|broadcast]"
----
-
 # Generate Filament v5 Notifications
 
 ## Process
 
-1. **Consult Documentation**: Read `${CLAUDE_SKILL_DIR}/../filament-docs/references/notifications/`
+1. **Consult Documentation**: Read `${CLAUDE_SKILL_DIR}/docs/references/notifications/`
 2. **Determine Type**: Flash (session), database, or broadcast notification
 3. **Configure Content**: Title, body, icon, color
 4. **Add Actions**: Buttons, links, mark-as-read

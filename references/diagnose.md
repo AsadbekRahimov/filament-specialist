@@ -1,10 +1,3 @@
----
-name: filament-diagnose
-description: Diagnose and fix common FilamentPHP v5 errors and issues. Use when encountering Filament errors, debugging resources, troubleshooting configuration problems, or upgrading from v4 to v5.
-allowed-tools: Bash, Glob, Grep, Read, Write, Edit
-argument-hint: "<error message or description of the issue>"
----
-
 # Diagnose FilamentPHP v5 Issues
 
 ## Process

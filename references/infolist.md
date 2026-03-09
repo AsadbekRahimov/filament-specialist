@@ -1,15 +1,8 @@
----
-name: filament-infolist
-description: Generate FilamentPHP v5 infolists for read-only data display with entries and layout components. Use when creating view pages, read-only displays, or data presentation interfaces.
-allowed-tools: Bash, Glob, Grep, Read, Write, Edit
-argument-hint: "<ModelName> with <entry1>, <entry2>, ..."
----
-
 # Generate Filament v5 Infolist
 
 ## Process
 
-1. **Consult Documentation**: Read `${CLAUDE_SKILL_DIR}/../filament-docs/references/infolists/`
+1. **Consult Documentation**: Read `${CLAUDE_SKILL_DIR}/docs/references/infolists/`
 2. **Analyze Model**: Determine which fields to display
 3. **Select Entry Types**: Map data types to entry components
 4. **Configure Layout**: Organize entries with layout components
