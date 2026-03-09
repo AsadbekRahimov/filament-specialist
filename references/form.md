@@ -1,15 +1,8 @@
----
-name: filament-form
-description: Create FilamentPHP v5 form schemas with fields, validation, layout components, and reactivity. Use when building forms, adding form fields, configuring validation rules, or setting up reactive form behavior.
-allowed-tools: Bash, Glob, Grep, Read, Write, Edit
-argument-hint: "<FormDescription> with <field1>, <field2>, ..."
----
-
 # Create Filament v5 Form Schema
 
 ## Process
 
-1. **Consult Documentation**: Read `${CLAUDE_SKILL_DIR}/../filament-docs/references/forms/`
+1. **Consult Documentation**: Read `${CLAUDE_SKILL_DIR}/docs/references/forms/`
 2. **Analyze Requirements**: Determine field types, validation, and layout
 3. **Generate Schema**: Build form schema with proper layout components
 4. **Add Validation**: Apply validation rules

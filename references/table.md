@@ -1,15 +1,8 @@
----
-name: filament-table
-description: Create FilamentPHP v5 table configurations with columns, filters, actions, summaries, and grouping. Use when building tables, adding columns, configuring filters, or setting up table actions.
-allowed-tools: Bash, Glob, Grep, Read, Write, Edit
-argument-hint: "<TableDescription> with <columns>, <filters>, <actions>"
----
-
 # Create Filament v5 Table Configuration
 
 ## Process
 
-1. **Consult Documentation**: Read `${CLAUDE_SKILL_DIR}/../filament-docs/references/tables/`
+1. **Consult Documentation**: Read `${CLAUDE_SKILL_DIR}/docs/references/tables/`
 2. **Analyze Model**: Determine displayable fields and relationships
 3. **Configure Columns**: Set up column types with formatting
 4. **Add Filters**: Create filters for data filtering

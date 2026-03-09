@@ -1,15 +1,8 @@
----
-name: filament-dashboard
-description: Create FilamentPHP v5 dashboard pages with widgets, tabs, filters, and custom content. Use when building admin dashboards, analytics pages, or widget-based layouts.
-allowed-tools: Bash, Glob, Grep, Read, Write, Edit
-argument-hint: "<DashboardName> with <widget1>, <widget2>, ..."
----
-
 # Create Filament v5 Dashboard
 
 ## Process
 
-1. **Consult Documentation**: Read `${CLAUDE_SKILL_DIR}/../filament-docs/references/widgets/`
+1. **Consult Documentation**: Read `${CLAUDE_SKILL_DIR}/docs/references/widgets/`
 2. **Plan Layout**: Determine widgets and their arrangement
 3. **Create Widgets**: Generate stats, chart, and table widgets
 4. **Configure Page**: Set up dashboard page with widget registration

@@ -1,15 +1,8 @@
----
-name: filament-resource
-description: Generate complete FilamentPHP v5 CRUD resources with form, table, pages, relation managers, and tests. Use when creating or modifying Filament resources, scaffolding CRUD interfaces, or setting up admin panel resources.
-allowed-tools: Bash, Glob, Grep, Read, Write, Edit
-argument-hint: "<ModelName> [--generate] [--simple] [--soft-deletes] [--view]"
----
-
 # Generate Filament v5 Resource
 
 ## Process
 
-1. **Consult Documentation**: Read `${CLAUDE_SKILL_DIR}/../filament-docs/references/general/03-resources/`
+1. **Consult Documentation**: Read `${CLAUDE_SKILL_DIR}/docs/references/general/03-resources/`
 2. **Analyze Model**: Examine the Eloquent model for fields, relationships, and casts
 3. **Generate Base**: Use `php artisan make:filament-resource`
 4. **Customize Form**: Build form schema with appropriate fields and validation

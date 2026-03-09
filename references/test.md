@@ -1,15 +1,8 @@
----
-name: filament-test
-description: Generate comprehensive Pest tests for FilamentPHP v5 resources, schemas, tables, actions, and authorization. Use when writing tests for Filament components, CRUD operations, or action workflows.
-allowed-tools: Bash, Glob, Grep, Read, Write, Edit
-argument-hint: "<ResourceName> [--with-auth] [--type=<resource|form|table|action>]"
----
-
 # Generate Filament v5 Pest Tests
 
 ## Process
 
-1. **Consult Documentation**: Read `${CLAUDE_SKILL_DIR}/../filament-docs/references/general/10-testing/`
+1. **Consult Documentation**: Read `${CLAUDE_SKILL_DIR}/docs/references/general/10-testing/`
 2. **Analyze Resource**: Examine the resource class, form, and table configuration
 3. **Generate Tests**: Create comprehensive test file
 4. **Include Coverage**: CRUD operations, validation, table features, actions, and authorization
