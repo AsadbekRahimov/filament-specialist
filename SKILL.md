@@ -75,6 +75,73 @@ php artisan make:filament-export        # CSV exporter
 4. **Test** — Create Pest tests for CRUD, validation, table features, actions
 5. **Verify** — Confirm code follows v5 patterns and works correctly
 
+## CRITICAL: v5 Breaking Changes from v3/v4
+
+**DO NOT use these old v3/v4 patterns. They will cause errors in v5.**
+
+| Old (v3/v4) | New (v5) | Notes |
+|-------------|----------|-------|
+| `use Filament\Forms\Form;` | `use Filament\Schemas\Schema;` | Forms now use Schema class |
+| `form(Form $form): Form` | `form(Schema $schema): Schema` | Method signature changed |
+| `return $form->schema([...])` | `return $schema->components([...])` | Variable name changed |
+| `use Filament\Infolists\Infolist;` | `use Filament\Schemas\Schema;` | Infolists unified under Schema |
+| `infolist(Infolist $infolist): Infolist` | `infolist(Schema $schema): Schema` | Method signature changed |
+| `return $infolist->schema([...])` | `return $schema->schema([...])` | Variable name changed |
+| `protected static ?string $navigationIcon` | `protected static BackedEnum\|string\|null $navigationIcon` | Requires `use BackedEnum;` |
+| `Filament\Pages\Auth\Login` | `Filament\Auth\Pages\Login` | Auth namespace moved |
+| `Filament\Forms\Components\Component` | `Filament\Schemas\Components\Component` | Component namespace moved |
+| `protected static ?string $heading` (widgets) | `protected ?string $heading` | Remove `static` keyword |
+| Password params without attribute | Add `#[SensitiveParameter]` | Security best practice |
+
+### Resource Method Signatures (v5)
+```php
+use BackedEnum;
+use Filament\Schemas\Schema;
+
+// Navigation icon type (MUST use BackedEnum union type)
+protected static BackedEnum|string|null $navigationIcon = 'heroicon-o-users';
+
+// Form method (MUST use Schema, NOT Form)
+public static function form(Schema $schema): Schema
+{
+    return $schema->components([...]);
+}
+
+// Infolist method (MUST use Schema, NOT Infolist)
+public static function infolist(Schema $schema): Schema
+{
+    return $schema->schema([...]);
+}
+```
+
+### Relation Manager Form (v5)
+```php
+use Filament\Schemas\Schema;
+
+public function form(Schema $schema): Schema
+{
+    return $schema->schema([...]);
+}
+```
+
+### Widget Heading (v5 — NOT static)
+```php
+// WRONG: protected static ?string $heading = 'Chart';
+// CORRECT:
+protected ?string $heading = 'Chart';
+```
+
+### Auth Page (v5 namespace)
+```php
+// WRONG: use Filament\Pages\Auth\Login;
+// CORRECT:
+use Filament\Auth\Pages\Login;
+use Filament\Schemas\Components\Component;
+
+// Use #[SensitiveParameter] for password data
+protected function getCredentialsFromFormData(#[\SensitiveParameter] array $data): array
+```
+
 ## Quick Reference: v5 Key Concepts
 
 ### Schemas (Foundation of v5 UIs)

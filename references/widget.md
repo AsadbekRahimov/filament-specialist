@@ -79,8 +79,8 @@ use Flowframe\Trend\TrendValue;
 
 class RevenueChart extends ChartWidget
 {
-    protected static ?string $heading = 'Monthly Revenue';
-    protected static ?string $description = 'Revenue trend over time';
+    protected ?string $heading = 'Monthly Revenue';
+    protected ?string $description = 'Revenue trend over time';
     protected static ?string $maxHeight = '300px';
     protected static ?string $pollingInterval = '30s';
 

@@ -66,6 +66,7 @@ use App\Filament\Resources\Customers\RelationManagers;
 use App\Filament\Resources\Customers\Schemas\CustomerForm;
 use App\Filament\Resources\Customers\Tables\CustomersTable;
 use App\Models\Customer;
+use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Table;
@@ -74,7 +75,7 @@ class CustomerResource extends Resource
 {
     protected static ?string $model = Customer::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-users';
+    protected static BackedEnum|string|null $navigationIcon = 'heroicon-o-users';
 
     protected static ?string $recordTitleAttribute = 'name';
 
@@ -309,8 +310,8 @@ $panel->strictAuthorization()
 ## Resource Configuration Options
 
 ```php
-// Navigation
-protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+// Navigation (requires: use BackedEnum;)
+protected static BackedEnum|string|null $navigationIcon = 'heroicon-o-rectangle-stack';
 protected static ?string $navigationLabel = 'Products';
 protected static ?string $navigationGroup = 'Shop';
 protected static ?int $navigationSort = 1;
