@@ -225,9 +225,9 @@ TextEntry::make('name')
 ## Complete Example
 
 ```php
-public function infolist(Infolist $infolist): Infolist
+public static function infolist(Schema $schema): Schema
 {
-    return $infolist->schema([
+    return $schema->schema([
         Tabs::make('Order Details')
             ->tabs([
                 Tabs\Tab::make('Overview')
