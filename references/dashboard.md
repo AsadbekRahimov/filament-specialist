@@ -18,6 +18,7 @@ declare(strict_types=1);
 namespace App\Filament\Pages;
 
 use App\Filament\Widgets;
+use BackedEnum;
 use Filament\Pages\Dashboard as BaseDashboard;
 
 class Dashboard extends BaseDashboard
@@ -257,6 +258,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Pages;
 
+use BackedEnum;
 use Filament\Pages\Page;
 
 class Settings extends Page
