@@ -56,6 +56,14 @@ find "$REFERENCES_DIR" -type d -name ".github" -exec rm -rf {} + 2>/dev/null || 
 # Remove empty directories
 find "$REFERENCES_DIR" -type d -empty -delete 2>/dev/null || true
 
+# Restore .gitkeep placeholders so git status stays clean
+# (fetched docs themselves are gitignored)
+touch "$REFERENCES_DIR/.gitkeep"
+for d in general actions forms infolists notifications schemas tables widgets; do
+    mkdir -p "$REFERENCES_DIR/$d"
+    touch "$REFERENCES_DIR/$d/.gitkeep"
+done
+
 # Clean up temp directory
 echo "Cleaning up temporary files..."
 rm -rf "$TEMP_DIR"

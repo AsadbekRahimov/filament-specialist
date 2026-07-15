@@ -19,7 +19,9 @@
 | enum/choice | `Select::make()` | `Filament\Forms\Components\Select` |
 | boolean | `Toggle::make()` | `Filament\Forms\Components\Toggle` |
 | boolean | `Checkbox::make()` | `Filament\Forms\Components\Checkbox` |
-| date | `DateTimePicker::make()` | `Filament\Forms\Components\DateTimePicker` |
+| datetime | `DateTimePicker::make()` | `Filament\Forms\Components\DateTimePicker` |
+| date | `DatePicker::make()` | `Filament\Forms\Components\DatePicker` |
+| time | `TimePicker::make()` | `Filament\Forms\Components\TimePicker` |
 | file/image | `FileUpload::make()` | `Filament\Forms\Components\FileUpload` |
 | array (repeating) | `Repeater::make()` | `Filament\Forms\Components\Repeater` |
 | array (blocks) | `Builder::make()` | `Filament\Forms\Components\Builder` |
@@ -32,13 +34,14 @@
 | toggle group | `ToggleButtons::make()` | `Filament\Forms\Components\ToggleButtons` |
 | hidden | `Hidden::make()` | `Filament\Forms\Components\Hidden` |
 
-### NEW in v5
+### Newer Components (v4+/v5)
 
 | Field/Component | Class | Use Case |
 |----------------|-------|----------|
-| ModalTableSelect | `ModalTableSelect::make()` | Pick from table modal |
-| FusedGroup | `FusedGroup::make()` | Visually fused inputs |
-| Flex | `Flex::make()` | Flexible sidebar patterns |
+| ModalTableSelect | `Filament\Forms\Components\ModalTableSelect` | Pick from table modal |
+| FusedGroup | `Filament\Schemas\Components\FusedGroup` | Visually fused inputs |
+| Flex | `Filament\Schemas\Components\Flex` | Flexible sidebar patterns |
+| Callout | `Filament\Schemas\Components\Callout` | Alert/notice box in schemas |
 
 ## Complete Field Reference
 
@@ -140,7 +143,9 @@ Checkbox::make('accept_terms')
 
 ### Date & Time
 ```php
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\DateTimePicker;
+use Filament\Forms\Components\TimePicker;
 
 DateTimePicker::make('published_at')
     ->native(false)
@@ -150,11 +155,11 @@ DateTimePicker::make('published_at')
     ->seconds(false)
     ->timezone('America/New_York')
 
-// Date only
-DateTimePicker::make('birth_date')->date()
+// Date only — use the dedicated DatePicker component
+DatePicker::make('birth_date')
 
-// Time only
-DateTimePicker::make('start_time')->time()
+// Time only — use the dedicated TimePicker component
+TimePicker::make('start_time')
 ```
 
 ### File Upload
@@ -193,10 +198,10 @@ RichEditor::make('content')
     ->fileAttachmentsDirectory('uploads')
     ->columnSpanFull()
 
-// NEW in v5: Store as JSON (TipTap format)
+// Store as JSON (TipTap format)
 RichEditor::make('content')->json()
 
-// NEW in v5: Custom text colors
+// Custom text colors
 RichEditor::make('content')
     ->textColors([
         '#ef4444' => 'Red',
@@ -205,11 +210,11 @@ RichEditor::make('content')
     ])
     ->customTextColors()
 
-// NEW in v5: Merge tags
+// Merge tags
 RichEditor::make('content')
     ->mergeTags(['name', 'email', 'today'])
 
-// NEW in v5: Mentions
+// Mentions
 use Filament\Forms\Components\RichEditor\MentionProvider;
 
 RichEditor::make('content')
@@ -218,10 +223,10 @@ RichEditor::make('content')
             ->items([1 => 'Jane Doe', 2 => 'John Smith']),
     ])
 
-// NEW in v5: Resizable images
+// Resizable images
 RichEditor::make('content')->resizableImages()
 
-// NEW in v5: Floating toolbars
+// Floating toolbars
 RichEditor::make('content')
     ->floatingToolbars([
         'paragraph' => ['bold', 'italic', 'underline', 'link'],
@@ -229,7 +234,7 @@ RichEditor::make('content')
     ])
 ```
 
-### ModalTableSelect (NEW in v5)
+### ModalTableSelect
 ```php
 use Filament\Forms\Components\ModalTableSelect;
 
@@ -275,13 +280,13 @@ Repeater::make('items')
     ->maxItems(10)
     ->itemLabel(fn (array $state): ?string => $state['product_id'] ?? null)
 
-// NEW in v5: Simple repeater (single field)
+// Simple repeater (single field)
 Repeater::make('invitations')
     ->simple(
         TextInput::make('email')->email()->required(),
     )
 
-// NEW in v5: Table repeater layout
+// Table repeater layout
 use Filament\Forms\Components\Repeater\TableColumn;
 
 Repeater::make('members')
@@ -295,7 +300,7 @@ Repeater::make('members')
     ])
     ->compact()
 
-// NEW in v5: Extra item actions
+// Extra item actions
 Repeater::make('members')
     ->schema([TextInput::make('email')->email()])
     ->extraItemActions([
@@ -364,11 +369,14 @@ ToggleButtons::make('status')
     ->colors(['draft' => 'warning', 'published' => 'success'])
     ->inline()
 
-// Slider
-Slider::make('rating')->min(0)->max(100)->step(5)
+// Slider — use range(), NOT min()/max()
+Slider::make('rating')
+    ->range(minValue: 0, maxValue: 100)
+    ->step(5)
 
-// Code Editor (NEW in v5)
-CodeEditor::make('code')->language('php')
+// Code Editor — language() takes a Language enum, NOT a string
+// use Filament\Forms\Components\CodeEditor\Enums\Language;
+CodeEditor::make('code')->language(Language::Php)
 
 // Hidden
 Hidden::make('user_id')->default(fn () => auth()->id())
@@ -417,11 +425,11 @@ Section::make('Rate limiting')
     ->aside()
     ->schema([...])
 
-// NEW in v5: Section secondary styling
+// Section secondary styling
 Section::make('Notes')
     ->schema([...])->secondary()->compact()
 
-// NEW in v5: Section header/footer actions
+// Section header/footer actions
 Section::make('Settings')
     ->afterHeader([Action::make('reset')])
     ->footer([Action::make('save')])
@@ -435,23 +443,23 @@ Tabs::make('Tabs')
     ])
     ->columnSpanFull()
 
-// NEW in v5: Vertical tabs
+// Vertical tabs
 Tabs::make('Settings')->tabs([...])->vertical()
 
-// NEW in v5: Persist tab in URL query string
+// Persist tab in URL query string
 Tabs::make('Settings')->tabs([...])->persistTabInQueryString('settings-tab')
 
 // Grid
 Grid::make(2)->schema([...])  // 2 columns
 Grid::make(['md' => 2, 'xl' => 3])->schema([...])  // Responsive
 
-// NEW in v5: Container queries (responsive within parent, not viewport)
+// Container queries (responsive within parent, not viewport)
 Grid::make()
     ->gridContainer()
     ->columns(['@md' => 3, '@xl' => 4])
     ->schema([...])
 
-// NEW in v5: Flex layout (sidebar patterns)
+// Flex layout (sidebar patterns)
 Flex::make([
     Section::make([
         TextInput::make('title'),
@@ -463,7 +471,7 @@ Flex::make([
     ])->grow(false),
 ])->from('md')
 
-// NEW in v5: FusedGroup (fuse fields together visually)
+// FusedGroup (fuse fields together visually)
 FusedGroup::make([
     TextInput::make('city')->placeholder('City'),
     Select::make('country')->options([...])->placeholder('Country'),
@@ -509,13 +517,13 @@ TextInput::make('title')
 TextInput::make('search')
     ->live(debounce: 500)
 
-// Client-side JS updates - NO server round-trip (NEW in v5)
+// Client-side JS updates - NO server round-trip
 TextInput::make('title')
     ->afterStateUpdatedJs(<<<'JS'
         $set('slug', ($state ?? '').replaceAll(' ', '-').toLowerCase())
     JS)
 
-// Client-side visibility - NO server round-trip (NEW in v5)
+// Client-side visibility - NO server round-trip
 Toggle::make('is_admin')
     ->hiddenJs(<<<'JS'
         $get('role') !== 'staff'
@@ -527,7 +535,7 @@ Toggle::make('is_admin')
         $get('role') === 'staff'
     JS)
 
-// Partial rendering - only re-render specific components (NEW in v5)
+// Partial rendering - only re-render specific components
 TextInput::make('title')
     ->live()
     ->partiallyRenderComponentsAfterStateUpdated(['slug'])
@@ -581,7 +589,7 @@ Functions accept these injectable parameters:
 - `$livewire` - component instance
 - `$component` - current field instance
 
-### Type-safe Get (NEW in v5)
+### Type-safe Get
 ```php
 use Filament\Schemas\Components\Utilities\Get;
 
@@ -601,7 +609,7 @@ function (Get $get) {
 }
 ```
 
-### JavaScript Dynamic Content (NEW in v5)
+### JavaScript Dynamic Content
 ```php
 use Filament\Schemas\JsContent;
 
@@ -645,7 +653,7 @@ Group::make()
         TextInput::make('email')->email()->required(),
     ])
 
-// Conditional relationship save (NEW in v5)
+// Conditional relationship save
 Group::make()
     ->relationship(
         'customer',

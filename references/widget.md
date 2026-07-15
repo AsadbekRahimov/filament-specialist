@@ -79,10 +79,11 @@ use Flowframe\Trend\TrendValue;
 
 class RevenueChart extends ChartWidget
 {
+    // NOTE: these properties are all NON-static in v5
     protected ?string $heading = 'Monthly Revenue';
     protected ?string $description = 'Revenue trend over time';
-    protected static ?string $maxHeight = '300px';
-    protected static ?string $pollingInterval = '30s';
+    protected ?string $maxHeight = '300px';
+    protected ?string $pollingInterval = '30s';
 
     public ?string $filter = 'month';
 
@@ -218,9 +219,9 @@ protected int | string | array $columnSpan = [
     'xl' => 3,
 ];
 
-// Polling
-protected static ?string $pollingInterval = '10s';
-protected static ?string $pollingInterval = null; // Disable
+// Polling (non-static, default '5s')
+protected ?string $pollingInterval = '10s';
+protected ?string $pollingInterval = null; // Disable
 
 // Lazy loading
 protected static bool $isLazy = true;
@@ -282,7 +283,7 @@ class Dashboard extends BaseDashboard
     }
 }
 
-// In Widget
+// In Widget — the property is $this->pageFilters (NOT $this->filters)
 use Filament\Widgets\Concerns\InteractsWithPageFilters;
 
 class FilteredStats extends StatsOverviewWidget
@@ -291,9 +292,9 @@ class FilteredStats extends StatsOverviewWidget
 
     protected function getStats(): array
     {
-        $startDate = $this->filters['startDate'] ?? null;
-        $endDate = $this->filters['endDate'] ?? null;
-        // Use filters in queries...
+        $startDate = $this->pageFilters['startDate'] ?? null;
+        $endDate = $this->pageFilters['endDate'] ?? null;
+        // Data is not validated — always check before using in queries.
     }
 }
 ```

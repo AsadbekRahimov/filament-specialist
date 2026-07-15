@@ -13,11 +13,13 @@
 ### TextEntry
 ```php
 use Filament\Infolists\Components\TextEntry;
+use Filament\Support\Enums\FontWeight;
+use Filament\Support\Enums\TextSize;
 
 TextEntry::make('name')
     ->label('Full Name')
     ->weight(FontWeight::Bold)
-    ->size(TextEntry\TextEntrySize::Large)
+    ->size(TextSize::Large)  // TextSize enum, NOT TextEntry\TextEntrySize
     ->copyable()
     ->copyMessage('Name copied')
     ->icon('heroicon-o-user')
@@ -124,10 +126,10 @@ ViewEntry::make('map')
 
 ```php
 use Filament\Schemas\Components\Fieldset;
+use Filament\Schemas\Components\Flex;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
-use Filament\Schemas\Components\Split;
 use Filament\Schemas\Components\Tabs;
 
 // Section
@@ -148,11 +150,11 @@ Tabs::make('Details')
 Grid::make(2)->schema([...])
 Grid::make(['md' => 2, 'xl' => 3])->schema([...])
 
-// Split
-Split::make([
+// Flex (sidebar pattern — there is NO Split schema component in v5)
+Flex::make([
     Section::make('Main')->schema([...]),
-    Section::make('Sidebar')->schema([...]),
-])
+    Section::make('Sidebar')->schema([...])->grow(false),
+])->from('md')
 
 // Group
 Group::make([
@@ -173,7 +175,7 @@ Group::make([
 ->visible(fn (?string $state) => filled($state))
 ->hidden(fn () => ! auth()->user()->isAdmin())
 
-// Client-side visibility - NO server round-trip (v4.5+/v5)
+// Client-side visibility - NO server round-trip
 ->hiddenJs(<<<'JS'
     $get('role') !== 'staff'
 JS)
@@ -201,13 +203,13 @@ JS)
 ->lineClamp(2)          // CSS line clamp
 ->wrap(false)           // Prevent wrapping
 
-// Date tooltips (v4.5+/v5)
+// Date tooltips
 ->since()->dateTooltip()        // "2h ago" with full date tooltip
 ->since()->dateTimeTooltip()    // "2h ago" with datetime tooltip
 ->dateTime()->sinceTooltip()    // Datetime with relative tooltip
 ```
 
-## Entry Slots (v4.5+/v5)
+## Entry Slots
 
 ```php
 use Filament\Actions\Action;
@@ -227,7 +229,7 @@ TextEntry::make('name')
 ```php
 public static function infolist(Schema $schema): Schema
 {
-    return $schema->schema([
+    return $schema->components([
         Tabs::make('Order Details')
             ->tabs([
                 Tabs\Tab::make('Overview')

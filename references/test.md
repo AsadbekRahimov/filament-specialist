@@ -45,10 +45,10 @@ uses(Illuminate\Foundation\Testing\RefreshDatabase::class)->in('Feature');
 
 ### List Page
 ```php
-use App\Filament\Resources\PostResource\Pages\ListPosts;
+use App\Filament\Resources\Posts\Pages\ListPosts;
 use App\Models\Post;
-use Filament\Testing\TestAction;
-use Filament\Tables\Actions\DeleteBulkAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\Testing\TestAction;  // NOT Filament\Testing\TestAction
 
 use function Pest\Livewire\livewire;
 
@@ -104,7 +104,7 @@ it('can bulk delete', function () {
 
 ### Create Page
 ```php
-use App\Filament\Resources\PostResource\Pages\CreatePost;
+use App\Filament\Resources\Posts\Pages\CreatePost;
 use App\Models\Post;
 
 it('can render create page', function () {
@@ -135,7 +135,7 @@ it('validates required fields', function () {
 
 ### Edit Page
 ```php
-use App\Filament\Resources\PostResource\Pages\EditPost;
+use App\Filament\Resources\Posts\Pages\EditPost;
 use App\Models\Post;
 use Filament\Actions\DeleteAction;
 
@@ -238,7 +238,7 @@ it('can delete record', function () {
 ## Action Testing (v5 with TestAction)
 
 ```php
-use Filament\Testing\TestAction;
+use Filament\Actions\Testing\TestAction;
 
 // Page actions
 ->callAction('publish')
@@ -295,9 +295,24 @@ use Filament\Testing\TestAction;
 ```php
 use Filament\Notifications\Notification;
 
-Notification::assertSentTo($user, function (Notification $notification) {
-    return $notification->getTitle() === 'Order shipped';
-});
+// Chained on a Livewire test:
+livewire(EditOrder::class, ['record' => $order->getRouteKey()])
+    ->callAction('ship')
+    ->assertNotified('Order shipped');
+
+// Or standalone after the action ran:
+Notification::assertNotified('Order shipped');
+
+// Assert against a full notification object:
+livewire(CreatePost::class)
+    ->call('create')
+    ->assertNotified(
+        Notification::make()
+            ->success()
+            ->title('Post created'),
+    );
+
+// There is NO Notification::assertSentTo() in Filament.
 ```
 
 ## Repeater & Builder Testing
@@ -372,7 +387,7 @@ it('prevents unauthorized editing', function () {
 ## Relation Manager Tests
 
 ```php
-use App\Filament\Resources\PostResource\RelationManagers\CommentsRelationManager;
+use App\Filament\Resources\Posts\RelationManagers\CommentsRelationManager;
 
 livewire(CommentsRelationManager::class, [
     'ownerRecord' => $post,

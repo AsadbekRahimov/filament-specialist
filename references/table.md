@@ -198,8 +198,9 @@ TernaryFilter::make('is_active')
 use Filament\Tables\Filters\Filter;
 use Filament\Forms\Components\DatePicker;
 
+// Note: filters use ->schema([...]), NOT ->form([...]) in v5
 Filter::make('created_at')
-    ->form([
+    ->schema([
         DatePicker::make('from')->label('From'),
         DatePicker::make('until')->label('Until'),
     ])
@@ -231,15 +232,23 @@ TrashedFilter::make()
 
 ## Actions Reference
 
+**CRITICAL**: In v5, ALL action classes live in the unified `Filament\Actions` namespace.
+The `Filament\Tables\Actions\*` classes do NOT exist.
+
 ### Row Actions
 ```php
+use Filament\Actions\Action;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
+
 ->recordActions([
-    Tables\Actions\ViewAction::make(),
-    Tables\Actions\EditAction::make(),
-    Tables\Actions\DeleteAction::make(),
+    ViewAction::make(),
+    EditAction::make(),
+    DeleteAction::make(),
 
     // Custom action
-    Tables\Actions\Action::make('approve')
+    Action::make('approve')
         ->icon('heroicon-o-check-circle')
         ->color('success')
         ->requiresConfirmation()
@@ -250,11 +259,15 @@ TrashedFilter::make()
 
 ### Bulk Actions
 ```php
-->toolbarActions([
-    Tables\Actions\BulkActionGroup::make([
-        Tables\Actions\DeleteBulkAction::make(),
+use Filament\Actions\BulkAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
 
-        Tables\Actions\BulkAction::make('export')
+->toolbarActions([
+    BulkActionGroup::make([
+        DeleteBulkAction::make(),
+
+        BulkAction::make('export')
             ->icon('heroicon-o-arrow-down-tray')
             ->action(fn (Collection $records) => static::export($records))
             ->deselectRecordsAfterCompletion(),
@@ -304,11 +317,13 @@ use Filament\Tables\Grouping\Group;
 ## Table Configuration
 
 ```php
+use Filament\Tables\Enums\PaginationMode;
+
 ->defaultSort('created_at', 'desc')
 ->striped()
 ->paginated([10, 25, 50, 100])
 ->defaultPaginationPageOption(25)
-->paginationMode(PaginationMode::Simple)
+->paginationMode(PaginationMode::Simple)  // or PaginationMode::Cursor
 ->reorderable('sort_order')
 ->deferLoading()
 ->poll('10s')
@@ -382,19 +397,28 @@ use Filament\Tables\Columns\Layout\Panel;
 ```
 
 ### Stacked on Mobile Shortcut
+`stackedOnMobile()` is a TABLE-level method (not a column method). It stacks all cells
+vertically on mobile without changing column definitions:
+
 ```php
-TextColumn::make('email')
-    ->stackedOnMobile()
+public static function configure(Table $table): Table
+{
+    return $table
+        ->columns([...])
+        ->stackedOnMobile();
+}
 ```
 
 ## Empty State
 
 ```php
+use Filament\Actions\Action;
+
 ->emptyStateHeading('No records found')
 ->emptyStateDescription('Create your first record to get started.')
 ->emptyStateIcon('heroicon-o-document')
 ->emptyStateActions([
-    Tables\Actions\Action::make('create')
+    Action::make('create')
         ->label('Create record')
         ->url(route('...'))
         ->icon('heroicon-o-plus'),
