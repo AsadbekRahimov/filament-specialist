@@ -32,6 +32,29 @@
 
 ## Common Issues and Solutions
 
+### 0. "Class not found" — v3-era Namespaces (MOST COMMON AI ERROR)
+**Symptoms**: `Class "Filament\Tables\Actions\EditAction" not found` or similar
+
+Most "class not found" errors come from using pre-v4 namespaces. Fix map:
+
+| Wrong (does not exist in v5) | Correct v5 class |
+|------------------------------|------------------|
+| `Filament\Tables\Actions\{Edit,Delete,View,Bulk...}Action` | `Filament\Actions\*` |
+| `Filament\Notifications\Actions\Action` | `Filament\Actions\Action` |
+| `Filament\Infolists\Components\Actions\Action` | `Filament\Actions\Action` |
+| `Filament\Forms\Form` | `Filament\Schemas\Schema` |
+| `Filament\Infolists\Infolist` | `Filament\Schemas\Schema` |
+| `Filament\Forms\Components\{Section,Grid,Tabs,Wizard,Fieldset,Group}` | `Filament\Schemas\Components\*` |
+| `Filament\Resources\Components\Tab` | `Filament\Schemas\Components\Tabs\Tab` |
+| `Filament\Pages\Auth\Login` | `Filament\Auth\Pages\Login` |
+| `Filament\Testing\TestAction` | `Filament\Actions\Testing\TestAction` |
+| `Filament\Models\Concerns\BelongsToTenant` | Does not exist — tenancy scoping is automatic for resources |
+| `Filament\Schemas\Components\Split` | `Filament\Schemas\Components\Flex` |
+
+Also check for renamed methods: `$table->actions()` → `recordActions()`,
+`$table->bulkActions()`/`headerActions()` → `toolbarActions()`,
+`Filter::form()` → `Filter::schema()`, `$this->filters` → `$this->pageFilters` (widgets).
+
 ### 1. Resource Not Appearing in Navigation
 **Symptoms**: Resource exists but doesn't show in sidebar
 **Causes**:
@@ -188,27 +211,21 @@ composer remove filament/upgrade --dev
 
 **Solution**:
 ```php
-// Option 1: Use trait on model
-use Filament\Models\Concerns\BelongsToTenant;
+// Resources ARE scoped automatically once the panel has ->tenant(Team::class)
+// and the model has a relationship to the tenant. Check:
+// 1. The ownership relationship exists on the model (e.g. team())
+//    or configure it: ->tenant(Team::class, ownershipRelationship: 'owner')
+// 2. The user model implements HasTenants (for canAccessTenant())
 
-class Product extends Model
-{
-    use BelongsToTenant;
-}
+// For models WITHOUT resources (widgets, custom pages), scope via middleware:
+use Filament\Facades\Filament;
+use Illuminate\Database\Eloquent\Builder;
 
-// Option 2: Manually scope in resource
-public static function getEloquentQuery(): Builder
-{
-    return parent::getEloquentQuery()
-        ->whereBelongsTo(Filament::getTenant());
-}
+Product::addGlobalScope(
+    fn (Builder $query) => $query->whereBelongsTo(Filament::getTenant()),
+);
 
-// Set tenant on creation
-protected function mutateFormDataBeforeCreate(array $data): array
-{
-    $data['team_id'] = Filament::getTenant()->id;
-    return $data;
-}
+// Note: there is NO Filament\Models\Concerns\BelongsToTenant trait.
 ```
 
 ### 9. Assets Not Loading / Styles Broken
@@ -284,7 +301,7 @@ composer dump-autoload
 2. Check Laravel version (11.28+ required)
 3. Check Filament version (`composer show filament/filament`)
 4. Check Livewire version (v4.0+ required)
-5. Verify panel provider is registered in `config/app.php`
+5. Verify panel provider is registered in `bootstrap/providers.php` (Laravel 11+)
 6. Check file permissions
 7. Clear all caches
 8. Check browser console for JS errors

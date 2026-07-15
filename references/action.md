@@ -11,6 +11,11 @@
 
 ## Action Types
 
+**CRITICAL**: In v5, ALL action classes live in the single unified `Filament\Actions`
+namespace — for pages, tables, schemas, infolists, and notifications alike. The old
+`Filament\Tables\Actions\*`, `Filament\Notifications\Actions\*`, and
+`Filament\Infolists\Components\Actions\*` namespaces do NOT exist.
+
 ### Page Header Actions
 ```php
 use Filament\Actions\Action;
@@ -28,7 +33,7 @@ protected function getHeaderActions(): array
 
 ### Table Row Actions
 ```php
-use Filament\Tables\Actions\Action;
+use Filament\Actions\Action;
 
 ->recordActions([
     Action::make('approve')
@@ -41,8 +46,8 @@ use Filament\Tables\Actions\Action;
 
 ### Table Bulk Actions
 ```php
-use Filament\Tables\Actions\BulkAction;
-use Filament\Tables\Actions\BulkActionGroup;
+use Filament\Actions\BulkAction;
+use Filament\Actions\BulkActionGroup;
 
 ->toolbarActions([
     BulkActionGroup::make([
@@ -78,9 +83,9 @@ TextInput::make('url')
     )
 ```
 
-### Infolist Entry Actions (NEW in v5)
+### Infolist Entry Actions
 ```php
-use Filament\Infolists\Components\Actions\Action;
+use Filament\Actions\Action;
 
 TextEntry::make('email')
     ->afterContent(
@@ -101,16 +106,18 @@ use Filament\Actions\ForceDeleteAction;
 use Filament\Actions\RestoreAction;
 use Filament\Actions\ReplicateAction;
 
-// Import/Export (NEW in v5)
+// Import/Export
 use Filament\Actions\ImportAction;
 use Filament\Actions\ExportAction;
 ```
 
-## Import Action (NEW in v5)
+## Import Action
 
 ### Generate Importer Class
 ```bash
-php artisan make:filament-import ProductImporter
+php artisan make:filament-importer Product
+# With auto-generated columns from the model:
+php artisan make:filament-importer Product --generate
 ```
 
 ### Importer Class
@@ -185,9 +192,9 @@ protected function getHeaderActions(): array
     ];
 }
 
-// As table toolbar action
+// As table toolbar action (same class — namespace is unified)
 ->toolbarActions([
-    Tables\Actions\ImportAction::make()
+    ImportAction::make()
         ->importer(ProductImporter::class),
 ])
 ```
@@ -202,11 +209,13 @@ ImportAction::make()
     ->job(CustomImportJob::class)
 ```
 
-## Export Action (NEW in v5)
+## Export Action
 
 ### Generate Exporter Class
 ```bash
-php artisan make:filament-export ProductExporter
+php artisan make:filament-exporter Product
+# With auto-generated columns from the model:
+php artisan make:filament-exporter Product --generate
 ```
 
 ### Exporter Class
@@ -317,7 +326,7 @@ Action::make('preview')
     ->schema([...])
 ```
 
-### Sticky Modal Header/Footer (v4.5+/v5)
+### Sticky Modal Header/Footer
 ```php
 Action::make('edit')
     ->schema([/* ... many fields ... */])
@@ -328,25 +337,27 @@ Action::make('edit')
 ## Trigger Styles
 
 ```php
+use Filament\Support\Enums\Size;
+
 ->button()        // Standard button (default)
 ->link()          // Text link style
 ->iconButton()    // Icon-only circular button
 ->badge()         // Badge style
 ->outlined()      // Outlined variant
-->size(Size::Large)  // Small, Medium, Large
-->labeledFrom('md')  // Hide label below breakpoint
+->size(Size::Large)  // Size::Small, Size::Medium, Size::Large
+->labeledFrom('md')  // Icon button below breakpoint, labeled button above
 ```
 
 ## Advanced Features
 
-### Rate Limiting (NEW in v5)
+### Rate Limiting
 ```php
 Action::make('send')
     ->rateLimit(5)  // 5 per minute
     ->rateLimitedNotificationTitle('Too many attempts!')
 ```
 
-### Keyboard Shortcuts (NEW in v5)
+### Keyboard Shortcuts
 ```php
 Action::make('save')
     ->keyBindings(['command+s', 'ctrl+s'])
@@ -367,7 +378,7 @@ Action::make('edit')
     ->authorizationTooltip()
     ->visible(fn () => auth()->user()->can('update', $this->record))
 
-// Custom unauthorized notification (v4.5+/v5)
+// Custom unauthorized notification
 Action::make('delete')
     ->authorize('delete')
     ->authorizationNotification(
@@ -399,35 +410,31 @@ ActionGroup::make([
 ])
 ->buttonGroup()
 
-// Dividers between items
+// Dividers between items — use NESTED groups with dropdown(false).
+// There is NO ActionGroup::DIVIDER constant.
 ActionGroup::make([
-    Action::make('edit'),
-    Action::make('duplicate'),
-    ActionGroup::DIVIDER,
+    ActionGroup::make([
+        Action::make('edit'),
+        Action::make('duplicate'),
+    ])->dropdown(false),
     Action::make('delete')->color('danger'),
 ])
 ```
 
-### Nested Action Modals (v4.5+/v5)
+### Nested Action Modals
+Actions can be nested: an action inside a modal opens its own modal on top.
+
 ```php
+// Extra footer actions rendered between the default modal buttons
 Action::make('edit')
     ->schema([
         TextInput::make('name'),
-        Select::make('category_id')
-            ->afterContent(
-                Action::make('createCategory')
-                    ->schema([
-                        TextInput::make('name')->required(),
-                    ])
-                    ->action(function (array $data, Set $set): void {
-                        $category = Category::create($data);
-                        $set('category_id', $category->id);
-                    })
-                    ->overlayParentActions()
-            ),
+    ])
+    ->extraModalFooterActions(fn (Action $action): array => [
+        $action->makeModalSubmitAction('saveAndClose', arguments: ['another' => false]),
     ])
 
-// Cancel parent actions when child action runs
+// Register a nested action and cancel the parent when it runs
 Action::make('review')
     ->schema([...])
     ->action(function (array $data): void { /* ... */ })
@@ -437,8 +444,14 @@ Action::make('review')
             ->action(function (Model $record): void {
                 $record->reject();
             })
-            ->cancelParentActions()
+            ->cancelParentActions(),
     ])
+
+// Access parent action data from a child via $mountedActions injection:
+Action::make('child')
+    ->action(function (array $mountedActions): void {
+        $parentRawData = $mountedActions[0]->getRawData(); // not yet validated
+    })
 ```
 
 ## Utility Injection
@@ -458,12 +471,12 @@ Action::make('review')
 
 declare(strict_types=1);
 
-namespace App\Filament\Resources\InvoiceResource\Pages;
+namespace App\Filament\Resources\Invoices\Pages;
 
-use App\Filament\Resources\InvoiceResource;
+use App\Filament\Resources\Invoices\InvoiceResource;
 use App\Mail\InvoiceMail;
-use Filament\Actions;
 use Filament\Actions\Action;
+use Filament\Actions\DeleteAction;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
@@ -523,7 +536,7 @@ class EditInvoice extends EditRecord
                 ->url(fn () => route('invoices.pdf', $this->record))
                 ->openUrlInNewTab(),
 
-            Actions\DeleteAction::make(),
+            DeleteAction::make(),
         ];
     }
 }

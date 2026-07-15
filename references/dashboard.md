@@ -34,14 +34,17 @@ class Dashboard extends BaseDashboard
         ];
     }
 
-    public function getColumns(): int | string | array
+    public function getColumns(): int | array
     {
         return 2;
     }
 }
 ```
 
-## Multi-Tab Dashboard
+## Multiple Dashboards
+
+Dashboards do not have built-in tabs. To separate widget groups, create multiple
+dashboard pages — each page extending `Dashboard` becomes its own dashboard:
 
 ```php
 <?php
@@ -52,39 +55,30 @@ namespace App\Filament\Pages;
 
 use App\Filament\Widgets;
 use Filament\Pages\Dashboard as BaseDashboard;
-use Filament\Schemas\Components\Tabs\Tab;
 
-class Dashboard extends BaseDashboard
+class AnalyticsDashboard extends BaseDashboard
 {
-    public function getTabs(): array
-    {
-        return [
-            'overview' => Tab::make('Overview')
-                ->icon('heroicon-o-chart-bar'),
-            'analytics' => Tab::make('Analytics')
-                ->icon('heroicon-o-presentation-chart-line'),
-            'reports' => Tab::make('Reports')
-                ->icon('heroicon-o-document-chart-bar'),
-        ];
-    }
+    // Each extra dashboard needs a unique route path
+    protected static string $routePath = 'analytics';
+
+    protected static ?string $title = 'Analytics';
 
     public function getWidgets(): array
     {
-        return match ($this->activeTab) {
-            'analytics' => [
-                Widgets\TrafficChart::class,
-                Widgets\ConversionChart::class,
-            ],
-            'reports' => [
-                Widgets\MonthlyReport::class,
-            ],
-            default => [
-                Widgets\StatsOverview::class,
-                Widgets\RevenueChart::class,
-                Widgets\LatestOrders::class,
-            ],
-        };
+        return [
+            Widgets\TrafficChart::class,
+            Widgets\ConversionChart::class,
+        ];
     }
+}
+```
+
+Control access per dashboard with `canAccess()`:
+
+```php
+public static function canAccess(): bool
+{
+    return auth()->user()->isAdmin();
 }
 ```
 
@@ -126,7 +120,7 @@ class Dashboard extends BaseDashboard
 }
 ```
 
-## Dashboard with Filter Action Modal (NEW in v5)
+## Dashboard with Filter Action Modal
 
 ```php
 <?php
@@ -185,8 +179,10 @@ class FilteredStats extends StatsOverviewWidget
 
     protected function getStats(): array
     {
-        $startDate = $this->filters['startDate'] ?? null;
-        $endDate = $this->filters['endDate'] ?? null;
+        // The property is $this->pageFilters (NOT $this->filters).
+        // Its data is not validated — check values before querying.
+        $startDate = $this->pageFilters['startDate'] ?? null;
+        $endDate = $this->pageFilters['endDate'] ?? null;
 
         $query = Order::query()
             ->when($startDate, fn ($q) => $q->where('created_at', '>=', $startDate))
@@ -200,7 +196,7 @@ class FilteredStats extends StatsOverviewWidget
 }
 ```
 
-## Widget Accessing Page Table Data (NEW in v5)
+## Widget Accessing Page Table Data
 
 ```php
 // On the List page
@@ -260,11 +256,12 @@ namespace App\Filament\Pages;
 
 use BackedEnum;
 use Filament\Pages\Page;
+use UnitEnum;
 
 class Settings extends Page
 {
     protected static BackedEnum|string|null $navigationIcon = 'heroicon-o-cog-6-tooth';
-    protected static ?string $navigationGroup = 'Settings';
+    protected static string|UnitEnum|null $navigationGroup = 'Settings';
     protected static string $view = 'filament.pages.settings';
 }
 ```

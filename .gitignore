@@ -1,0 +1,5 @@
+# Fetched Filament documentation — regenerate with: bash docs/rebuildFilamentDocs.sh
+# Keep directory placeholders (.gitkeep) tracked, ignore the downloaded .md files.
+docs/references/**
+!docs/references/**/
+!docs/references/**/.gitkeep

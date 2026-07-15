@@ -31,25 +31,31 @@ php artisan make:filament-resource Customer --view
 
 # Generate model, migration, and factory together
 php artisan make:filament-resource Customer --model --migration --factory
+
+# Embed form/table in the resource class instead of separate files
+php artisan make:filament-resource Customer --embed-schemas --embed-table
+
+# Nested resource (scoped inside a parent resource via a relationship)
+php artisan make:filament-resource Lesson --nested
 ```
 
 ## Resource File Structure (v5)
 
-In Filament v5, `make:filament-resource` generates a more organized file structure with
-separate Schema and Table classes:
+In Filament v5, `make:filament-resource` generates an organized file structure with
+separate Schema and Table classes. Note the resource directory is part of the namespace:
 
 ```
 app/Filament/Resources/
 └── Customers/
-    ├── CustomerResource.php
+    ├── CustomerResource.php        # App\Filament\Resources\Customers
     ├── Pages/
-    │   ├── CreateCustomer.php
+    │   ├── CreateCustomer.php      # App\Filament\Resources\Customers\Pages
     │   ├── EditCustomer.php
     │   └── ListCustomers.php
     ├── Schemas/
-    │   └── CustomerForm.php        # Separate form schema class (NEW in v5)
+    │   └── CustomerForm.php        # App\Filament\Resources\Customers\Schemas
     └── Tables/
-        └── CustomersTable.php      # Separate table config class (NEW in v5)
+        └── CustomersTable.php      # App\Filament\Resources\Customers\Tables
 ```
 
 ### Resource Class
@@ -59,7 +65,7 @@ app/Filament/Resources/
 
 declare(strict_types=1);
 
-namespace App\Filament\Resources;
+namespace App\Filament\Resources\Customers;
 
 use App\Filament\Resources\Customers\Pages;
 use App\Filament\Resources\Customers\RelationManagers;
@@ -107,7 +113,7 @@ class CustomerResource extends Resource
 }
 ```
 
-### Separate Form Schema Class (NEW in v5)
+### Separate Form Schema Class
 
 ```php
 <?php
@@ -131,7 +137,10 @@ class CustomerForm
 }
 ```
 
-### Separate Table Config Class (NEW in v5)
+### Separate Table Config Class
+
+**CRITICAL**: All action classes are in the unified `Filament\Actions` namespace.
+`Filament\Tables\Actions\*` does NOT exist in v5.
 
 ```php
 <?php
@@ -140,9 +149,9 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\Customers\Tables;
 
-use Filament\Tables\Actions\BulkActionGroup;
-use Filament\Tables\Actions\DeleteBulkAction;
-use Filament\Tables\Actions\EditAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
@@ -227,14 +236,15 @@ Map database columns to appropriate Filament field types:
 | boolean/tinyint | `Toggle::make()` or `Checkbox::make()` |
 | integer/bigint | `TextInput::make()->numeric()` |
 | decimal/float | `TextInput::make()->numeric()` |
-| date | `DateTimePicker::make()` |
+| date | `DatePicker::make()` |
 | datetime/timestamp | `DateTimePicker::make()` |
 | enum | `Select::make()->options([...])` |
 | json (array) | `Repeater::make()` or `KeyValue::make()` |
 | json (blocks) | `Builder::make()` |
 | foreign key | `Select::make()->relationship()` |
 
-**CRITICAL**: All form fields MUST be wrapped in layout components (Section, Grid, Tabs). Never place fields at the root level.
+Organize form fields with layout components (Section, Grid, Tabs) from
+`Filament\Schemas\Components` for well-structured forms.
 
 ## Table: Column Type Mapping
 
@@ -251,6 +261,16 @@ Map database columns to appropriate Filament field types:
 
 ```bash
 php artisan make:filament-relation-manager ResourceName relationName titleAttribute
+```
+
+```php
+use Filament\Schemas\Schema;
+
+// Note: relation manager form() is an INSTANCE method (not static)
+public function form(Schema $schema): Schema
+{
+    return $schema->components([...]);
+}
 ```
 
 ## Authorization
@@ -310,10 +330,13 @@ $panel->strictAuthorization()
 ## Resource Configuration Options
 
 ```php
-// Navigation (requires: use BackedEnum;)
+use BackedEnum;
+use UnitEnum;
+
+// Navigation
 protected static BackedEnum|string|null $navigationIcon = 'heroicon-o-rectangle-stack';
 protected static ?string $navigationLabel = 'Products';
-protected static ?string $navigationGroup = 'Shop';
+protected static string|UnitEnum|null $navigationGroup = 'Shop';
 protected static ?int $navigationSort = 1;
 protected static ?string $navigationParentItem = 'Products';
 
@@ -332,10 +355,13 @@ public static function getEloquentQuery(): Builder
 }
 ```
 
-## Listing Page Tabs (NEW in v5)
+## Listing Page Tabs
+
+**Note**: List page tabs use the Schema `Tab` class (NOT `Filament\Resources\Components\Tab`).
 
 ```php
-use Filament\Resources\Pages\ListRecords\Tab;
+use Filament\Schemas\Components\Tabs\Tab;
+use Illuminate\Database\Eloquent\Builder;
 
 public function getTabs(): array
 {
@@ -356,9 +382,12 @@ public function getDefaultActiveTab(): string | int | null
 }
 ```
 
-## Record Sub-Navigation (NEW in v5)
+## Record Sub-Navigation
 
 ```php
+use Filament\Pages\Enums\SubNavigationPosition;
+use Filament\Resources\Pages\Page;
+
 public static function getRecordSubNavigation(Page $page): array
 {
     return $page->generateNavigationItems([
@@ -371,9 +400,13 @@ public static function getRecordSubNavigation(Page $page): array
 protected static ?SubNavigationPosition $subNavigationPosition = SubNavigationPosition::End;
 ```
 
-## Clusters (NEW in v5)
+## Clusters
 
 Group resources under a cluster for hierarchical navigation:
+
+```bash
+php artisan make:filament-cluster Settings
+```
 
 ```php
 // In resource class
@@ -407,12 +440,18 @@ class CreateCategory extends CreateRecord
 ## Section-Level Save (Edit Pages)
 
 ```php
+use Filament\Actions\Action;
+use Filament\Notifications\Notification;
+use Filament\Resources\Pages\EditRecord;
+use Filament\Schemas\Components\Section;
+
 Section::make('Settings')
     ->schema([...])
     ->footerActions([
         fn (string $operation): Action => Action::make('save')
             ->action(function (Section $component, EditRecord $livewire) {
                 $livewire->saveFormComponentOnly($component);
+
                 Notification::make()->title('Saved')->success()->send();
             })
             ->visible($operation === 'edit'),
@@ -421,49 +460,79 @@ Section::make('Settings')
 
 ## Multi-Tenancy
 
-### Scoping Resources to Tenant
+**IMPORTANT**: Filament does NOT ship a `BelongsToTenant` model trait. Do not invent one.
+
+### Automatic Scoping
+Once tenancy is configured on the panel, Filament **automatically scopes all resource
+queries** to the current tenant using the ownership relationship:
+
 ```php
-// Option 1: Automatic scoping via BelongsToTenant trait on model
-use Filament\Models\Concerns\BelongsToTenant;
+$panel
+    ->tenant(Team::class)
+    // Custom ownership relationship name (default is derived from tenant model):
+    // ->tenant(Team::class, ownershipRelationship: 'owner')
+    // ->tenant(Team::class, slugAttribute: 'slug')
+    ->tenantRegistration(RegisterTeam::class);
+```
 
-class Product extends Model
-{
-    use BelongsToTenant;
-}
+New records created through resources automatically get associated with the current tenant.
 
-// Option 2: Manual query scoping in resource
-public static function getEloquentQuery(): Builder
+### Scoping Non-Resource Queries
+For models used outside resources (e.g. in widgets or custom pages), apply a global
+scope via middleware:
+
+```php
+use Filament\Facades\Filament;
+use Illuminate\Database\Eloquent\Builder;
+
+class ApplyTenantScopes
 {
-    return parent::getEloquentQuery()
-        ->whereBelongsTo(Filament::getTenant());
+    public function handle(Request $request, Closure $next): mixed
+    {
+        Author::addGlobalScope(
+            fn (Builder $query) => $query->whereBelongsTo(Filament::getTenant()),
+        );
+
+        return $next($request);
+    }
 }
 ```
 
-### Automatically Set Tenant on Create
+### Opting a Resource Out of Tenant Scoping
 ```php
-// In CreateRecord page
-protected function mutateFormDataBeforeCreate(array $data): array
-{
-    $data['team_id'] = Filament::getTenant()->id;
-    return $data;
-}
+use Filament\Resources\Resource;
+
+// In a service provider's boot() method:
+Resource::scopeToTenant(false);
 ```
 
 ## Nested Resources
 
 ```bash
-php artisan make:filament-resource Product --parent=CategoryResource
+php artisan make:filament-resource Lesson --nested
 ```
 
-Nested resources display within a parent resource, e.g., `/categories/{category}/products`.
+Nested resources display within a parent resource's relation manager or relation page,
+e.g., `/courses/{course}/lessons/{lesson}`. They require a relation manager or relation
+page on the parent resource to be accessible.
 
 ## Singular Resources
 
-For models with only one record (e.g., settings):
+There is no built-in "singular resource" flag. For single-record pages (settings,
+homepage, profile), create a custom page with a form:
 
 ```bash
-php artisan make:filament-resource Settings --singular
+php artisan make:filament-page ManageHomepage
 ```
+
+The page class should contain:
+- A public `?array $data = []` property bound via `statePath('data')`
+- A `mount()` method that loads the record and fills the form
+- A `form(Schema $schema): Schema` method defining the schema
+- A `save()` method that validates via `getState()` and creates/updates the record
+
+For app settings, prefer the official Spatie Settings plugin
+(`filament/spatie-laravel-settings-plugin`).
 
 ## Global Search Configuration
 
@@ -504,7 +573,9 @@ public static function getGlobalSearchEloquentQuery(): Builder
 ## Output
 
 Generated files:
-1. `app/Filament/Resources/{Model}Resource.php` - Resource class
-2. `app/Filament/Resources/{Model}Resource/Pages/` - List, Create, Edit pages
-3. `app/Filament/Resources/{Model}Resource/RelationManagers/` - Relation managers (if applicable)
-4. `tests/Feature/Filament/{Model}ResourceTest.php` - Pest tests
+1. `app/Filament/Resources/{Model}s/{Model}Resource.php` - Resource class
+2. `app/Filament/Resources/{Model}s/Pages/` - List, Create, Edit pages
+3. `app/Filament/Resources/{Model}s/Schemas/` - Form schema class
+4. `app/Filament/Resources/{Model}s/Tables/` - Table config class
+5. `app/Filament/Resources/{Model}s/RelationManagers/` - Relation managers (if applicable)
+6. `tests/Feature/Filament/{Model}ResourceTest.php` - Pest tests

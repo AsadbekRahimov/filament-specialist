@@ -8,6 +8,9 @@
 4. **Add Actions**: Buttons, links, mark-as-read
 5. **Send**: To current user or to specific recipients
 
+**CRITICAL**: Notification action buttons use the unified `Filament\Actions\Action` class.
+`Filament\Notifications\Actions\Action` does NOT exist in v5.
+
 ## Flash Notifications (Session)
 
 ### Basic Notification
@@ -42,16 +45,19 @@ Notification::make()->title('Info')->info()->send();
 
 ### With Actions
 ```php
+use Filament\Actions\Action;
+use Filament\Notifications\Notification;
+
 Notification::make()
     ->title('Record deleted')
     ->body('The post has been moved to trash.')
     ->success()
     ->actions([
-        \Filament\Notifications\Actions\Action::make('undo')
+        Action::make('undo')
             ->button()
             ->color('gray')
             ->url(route('posts.restore', $post)),
-        \Filament\Notifications\Actions\Action::make('view')
+        Action::make('view')
             ->button()
             ->url(route('posts.index')),
     ])
@@ -72,7 +78,7 @@ Notification::make()
 
 ### Setup
 ```bash
-php artisan notifications:table
+php artisan make:notifications-table
 php artisan migrate
 ```
 
@@ -83,6 +89,7 @@ $panel->databaseNotifications()
 
 ### Sending Database Notifications
 ```php
+use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 
 $recipient = auth()->user();
@@ -93,10 +100,10 @@ Notification::make()
     ->icon('heroicon-o-shopping-bag')
     ->success()
     ->actions([
-        \Filament\Notifications\Actions\Action::make('view')
+        Action::make('view')
             ->url(OrderResource::getUrl('edit', ['record' => $order]))
             ->button(),
-        \Filament\Notifications\Actions\Action::make('mark_read')
+        Action::make('markAsRead')
             ->markAsRead(),
     ])
     ->sendToDatabase($recipient);
@@ -115,24 +122,25 @@ Notification::make()
 ```php
 $panel->databaseNotifications()
     ->databaseNotificationsPolling('30s')
+
+// Disable polling (e.g. when using websockets):
+$panel->databaseNotifications()
+    ->databaseNotificationsPolling(null)
 ```
 
-### Unread Notification Count Badge
+### Positioning the Database Notifications Modal
 ```php
-$panel->databaseNotifications()
-    ->unreadDatabaseNotificationsCount()
+use Filament\Enums\DatabaseNotificationsPosition;
+
+$panel->databaseNotifications(position: DatabaseNotificationsPosition::Sidebar)
 ```
 
 ## Broadcast Notifications (Real-Time)
 
 ### Setup
-```bash
-composer require laravel/echo pusher/pusher-php-server
-```
-
-```php
-$panel->broadcasting()
-```
+Requires [Laravel Echo](https://laravel.com/docs/broadcasting#client-side-installation)
+plus a server-side websockets integration (Pusher, Laravel Reverb, etc.). See the
+"Setting up websockets in a panel" section of the broadcast notifications docs.
 
 ### Sending Real-Time Notifications
 ```php
@@ -144,12 +152,14 @@ Notification::make()
 
 ### Send Both Database + Broadcast
 ```php
+use Filament\Actions\Action;
+
 Notification::make()
     ->title('New comment on your post')
     ->body($comment->body)
     ->success()
     ->actions([
-        \Filament\Notifications\Actions\Action::make('view')
+        Action::make('view')
             ->url(PostResource::getUrl('edit', ['record' => $post])),
     ])
     ->sendToDatabase($recipient)
@@ -159,19 +169,19 @@ Notification::make()
 ## Notification Actions
 
 ```php
-use Filament\Notifications\Actions\Action;
+use Filament\Actions\Action;
 
 Action::make('view')->button()->url('/orders/123')->openUrlInNewTab()
 Action::make('details')->url('/orders/123')
 Action::make('dismiss')->close()
-Action::make('mark_read')->markAsRead()
-Action::make('mark_unread')->markAsUnread()
+Action::make('markAsRead')->markAsRead()
+Action::make('markAsUnread')->markAsUnread()
 Action::make('approve')->button()->color('success')
 Action::make('refresh')->dispatch('refresh-data')
 Action::make('load')->dispatchTo('chart-widget', 'load-data', ['period' => 'month'])
 ```
 
-## JavaScript Notification API (v4.5+/v5)
+## JavaScript Notification API
 
 Send notifications from client-side JavaScript:
 
@@ -197,10 +207,12 @@ new FilamentNotification()
     .title('File uploaded')
     .success()
     .actions([
-        new FilamentNotificationAction('View')
+        new FilamentNotificationAction('view')
+            .button()
             .url('/files/123')
-            .button(),
-        new FilamentNotificationAction('Dismiss')
+            .openUrlInNewTab(),
+        new FilamentNotificationAction('dismiss')
+            .color('gray')
             .close(),
     ])
     .send()
@@ -222,34 +234,49 @@ Action::make('copy_url')
 
 ## Notification Positioning
 
+Configure in a service provider or middleware using alignment methods
+(there is NO `NotificationsPosition` enum):
+
 ```php
 use Filament\Notifications\Livewire\Notifications;
-use Filament\Notifications\NotificationsPosition;
+use Filament\Support\Enums\Alignment;
+use Filament\Support\Enums\VerticalAlignment;
 
-Notifications::position(NotificationsPosition::TopCenter);
-// Options: TopLeft, TopCenter, TopRight, BottomLeft, BottomCenter, BottomRight
-
-use Filament\Notifications\Livewire\DatabaseNotifications;
-use Filament\Notifications\DatabaseNotificationsPosition;
-
-DatabaseNotifications::position(DatabaseNotificationsPosition::Sidebar);
+Notifications::alignment(Alignment::Start);            // Start | Center | End
+Notifications::verticalAlignment(VerticalAlignment::End); // Start | Center | End
 ```
 
 ## Testing Notifications
 
 ```php
-use Filament\Notifications\Notification;
+use function Pest\Livewire\livewire;
 
 it('sends notification on approval', function () {
     $order = Order::factory()->create(['status' => 'pending']);
 
     livewire(EditOrder::class, ['record' => $order->getRouteKey()])
-        ->callAction('approve');
-
-    Notification::assertSentTo($order->customer, function (Notification $notification) {
-        return $notification->getTitle() === 'Your order has been approved';
-    });
+        ->callAction('approve')
+        ->assertNotified('Order approved');
 });
+
+// Assert against a full notification object:
+use Filament\Notifications\Notification;
+
+livewire(CreatePost::class)
+    ->call('create')
+    ->assertNotified(
+        Notification::make()
+            ->success()
+            ->title('Post created'),
+    );
+
+// Outside a Livewire test:
+Notification::assertNotified('Order approved');
+
+// Or via the namespaced helper:
+use function Filament\Notifications\Testing\assertNotified;
+
+assertNotified();
 ```
 
 ## Complete Example
@@ -263,7 +290,7 @@ namespace App\Services;
 
 use App\Models\Order;
 use App\Models\User;
-use Filament\Notifications\Actions\Action;
+use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 
 class OrderNotificationService
@@ -286,7 +313,7 @@ class OrderNotificationService
                     ->label('View Order')
                     ->url(route('filament.admin.resources.orders.edit', $order))
                     ->button(),
-                Action::make('mark_read')
+                Action::make('markAsRead')
                     ->markAsRead(),
             ])
             ->sendToDatabase($admins)

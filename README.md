@@ -33,7 +33,7 @@ bash ~/.claude/skills/filament-specialist/docs/rebuildFilamentDocs.sh
 - Laravel 11.28+
 - FilamentPHP v5.x
 - Livewire v4.0+
-- Tailwind CSS v4.1+
+- Tailwind CSS v4.0+
 - Pest testing framework
 
 ## What It Can Do
@@ -74,10 +74,23 @@ filament-specialist/
 
 ## Filament v5 vs v4
 
-Filament v5 has **no new Filament-specific features** over v4. The major version bump is solely for **Livewire v4 compatibility**. Features ship to both v4 and v5 in parallel.
+Filament v5 has **no new Filament-specific features** over v4. The major version bump is solely for **Livewire v4 compatibility**. Features ship to both v4.x and v5 in parallel, so v4 documentation patterns apply to v5 as well.
 
-### Notable Features (available in both v4.5+ and v5)
-- Schemas package, Import/Export actions, Code editor, Slider, ModalTableSelect
-- Flex layout, FusedGroup, Enhanced reactivity (`afterStateUpdatedJs`, `hiddenJs`)
-- Type-safe Get, RichEditor enhancements, Rate limiting, Keyboard shortcuts
-- TestAction helper, Clusters, Resource sub-navigation, Dashboard FilterAction
+### Notable v4/v5 Features (vs v3)
+- Schemas package (unified forms + infolists + layouts)
+- **Unified actions namespace** — all actions live in `Filament\Actions`
+- Import/Export actions, Code editor, Slider, ModalTableSelect
+- Flex layout, FusedGroup, Callout, Enhanced reactivity (`afterStateUpdatedJs`, `hiddenJs`)
+- Type-safe Get, RichEditor enhancements (JSON, merge tags, mentions), Rate limiting, Keyboard shortcuts
+- TestAction helper, Nested resources, Resource sub-navigation, Dashboard FilterAction
+
+### AI-Assisted Development
+
+Filament officially supports AI workflows via [Laravel Boost](https://laravel.com/ai/boost):
+
+```bash
+composer require laravel/boost --dev
+php artisan boost:install   # select Filament when prompted
+```
+
+This skill complements Boost with detailed, verified v5 code references.
